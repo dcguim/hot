@@ -96,6 +96,7 @@ path * new_path (int length)
 void free_path (path * p)
 {
   free(p->path);
+  free(p);
 }
 
 void path_print(path * p)
@@ -275,11 +276,11 @@ path * ch_nearest_neighbor (graph * g, int start)
       int i = 0;
       edge next_v;
       int * available_v;
-      int * distance_indices = get_edges_ordered_by_closest_to_zero(
+      int * edge_indices = get_edges_ordered_by_closest_to_zero(
           &g->vertices[v], c);
       do
         {
-          next_v = g->vertices[v].edges[distance_indices[i++]];
+          next_v = g->vertices[v].edges[edge_indices[i++]];
           available_v = (int*) bsearch(&next_v.v2.id, available, available_length, sizeof(int), cmp_int);
         }
       while (i < g->vertices[v].degree && available_v == NULL);
@@ -303,7 +304,7 @@ path * ch_nearest_neighbor (graph * g, int start)
           v = next_v.v2.id;
           p->path[path_i++] = v;
         }
-      free(distance_indices);
+      free(edge_indices);
     }
   while (available_length > 0);
   p->path[path_i++] = start;
