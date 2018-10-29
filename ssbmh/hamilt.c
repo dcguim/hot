@@ -63,7 +63,10 @@ int edge_diff_cmp (const void * a, const void * b)
   return 0;
 }
 
-int * get_edges_ordered_by_cost_distance(vertex * v, int cost)
+// Returns array of indices of edges in the adj list of the given vertex [v]
+// sorted from 'best' to 'worst', where 'best' means the edge's cost added
+// to the given [cost] is closest to zero.
+int * get_edges_ordered_by_closest_to_zero(vertex * v, int cost)
 {
   int * distances = (int*) malloc(v->degree * sizeof(int));
   edge_diff * diff = (edge_diff*) malloc(v->degree * sizeof(edge_diff));
@@ -127,9 +130,9 @@ edge * find_edge_from_to (graph * g, int a, int b)
   for (int i = 0; i < d; ++i)
     {
       if (v.edges[i].v2.id == b)
-	{
-	  return v.edges + i;
-	}
+        {
+          return v.edges + i;
+        }
     }
   return NULL;
 }
@@ -145,7 +148,7 @@ graph * new_graph (int n, int m)
 }
 
 void free_graph (graph * g)
-{  
+{
   for (int i = 0; i < g->n; ++i)
     {
       free(g->vertices[i].edges);
@@ -160,7 +163,7 @@ void graph_read_edges (graph * g, FILE * fs)
   while (k != -1)
     {
       k = fscanf(fs, "%d %d %d\n",
-	    &(g->edges[i].v1.id), &(g->edges[i].v2.id), &(g->edges[i].c));
+            &(g->edges[i].v1.id), &(g->edges[i].v2.id), &(g->edges[i].c));
       i += 1;
     }
   //TODO calculate M
@@ -219,12 +222,12 @@ graph * graph_from_file (char * file)
   FILE * fs;
   fs = fopen(file, "r");
   int i;
-  
+
   printf("Enter graph from file\n");
   fflush(stdout);
   fscanf(fs, "%d %d", &n, &m);
   graph * g = new_graph(n, m);
-  graph_read_edges (g, fs);  
+  graph_read_edges (g, fs);
   fclose(fs);
   printf("m:%d, n:%d\nedges:\n",g->m, g->n);
   for (i=0; i<g->m;i++)
@@ -251,12 +254,15 @@ int cbtsp_o(graph * g, path * p)
 
 path * ch_nearest_neighbor (graph * g, int start)
 {
+  // Initialize array of vertex ids to store which vertices are not part of
+  // the path and still available. The array is sorted and used with bsearch later.
   int available_length = g->n - 1;
   int * available = (int*) malloc(available_length * sizeof(int));
   for (int i = 0; i < available_length; ++i)
-  {
-    available[i] = (i < start) ? i : i + 1;
-  }
+    {
+      // Add id, but skip the start vertex
+      available[i] = (i < start) ? i : i + 1;
+    }
 
   int path_i = 0;
   int v = start;
@@ -265,33 +271,38 @@ path * ch_nearest_neighbor (graph * g, int start)
   p->path[path_i++] = v;
   do
     {
+      // Find the best vertex that is still available
       int i = 0;
       edge next_v;
       int * available_v;
-      int * distance_indices = get_edges_ordered_by_cost_distance(&g->vertices[v], c);
+      int * distance_indices = get_edges_ordered_by_closest_to_zero(
+          &g->vertices[v], c);
       do
-	{
-	  next_v = g->vertices[v].edges[distance_indices[i++]];
-	  available_v = (int*) bsearch(&next_v.v2, available, available_length, sizeof(int), cmp_int);
-	}
+        {
+          next_v = g->vertices[v].edges[distance_indices[i++]];
+          available_v = (int*) bsearch(&next_v.v2.id, available, available_length, sizeof(int), cmp_int);
+        }
       while (i < g->vertices[v].degree && available_v == NULL);
+
       if (available_v == NULL)
-	{
-	  c += g->bigM;
-	  p->path[path_i++] = available[--available_length];
-	} 
+        {
+          // Choose any available vertex
+          c += g->bigM;
+          p->path[path_i++] = available[--available_length];
+        }
       else
-	{
-	  int available_i = available_v - available;
-	  available_length -= 1;
-	  for (int i = available_i; i < available_length; ++i)
-	    {
-	      available[i] = available[i + 1];
-	    }
-	  c += next_v.c;
-	  v = next_v.v2;
-	  p->path[path_i++] = v;
-	}
+        {
+          // Choose best vertex and remove it from list of available vertices
+          int available_i = available_v - available;
+          available_length -= 1;
+          for (int i = available_i; i < available_length; ++i)
+            {
+              available[i] = available[i + 1];
+            }
+          c += next_v.c;
+          v = next_v.v2.id;
+          p->path[path_i++] = v;
+        }
       free(distance_indices);
     }
   while (available_length > 0);
@@ -304,9 +315,8 @@ int main (int argc, char** argv)
 {
   graph * g = graph_from_file(argv[1]);
   path * p = ch_nearest_neighbor(g, atoi(argv[2]));
-  //path_print(p);
   int o = cbtsp_o (g, p);
-  printf("%d\n", o);
+  printf("cost of constructed path: %d\n", o);
   free_path(p);
   free_graph(g);
   return 0;
