@@ -1,5 +1,6 @@
 #include<stdio.h>
 #include<stdlib.h>
+#include<math.h>
 
 struct edge;
 typedef struct vertex
@@ -28,11 +29,80 @@ typedef struct path
   int length;
 } path;
 
+typedef struct edge_diff
+{
+  edge * e;
+  int distance;
+  int i;
+} edge_diff;
+
+int cmp_int (const void * a, const void * b)
+{
+  int ai = *(int*) a;
+  int bi = *(int*) b;
+  if (ai < bi) return -1;
+  if (ai > bi) return 1;
+  return 0;
+}
+
+int cmp_cost (const void * a, const void * b)
+{
+  int ca = abs(((edge*) a)->c);
+  int cb = abs(((edge*) b)->c);
+  if (ca < cb) return -1;
+  if (ca > cb) return 1;
+  return 0;
+}
+
+int edge_diff_cmp (const void * a, const void * b)
+{
+  edge_diff * ad = (edge_diff*) a;
+  edge_diff * bd = (edge_diff*) b;
+  if (ad->distance < bd->distance) return -1;
+  if (ad->distance > bd->distance) return 1;
+  return 0;
+}
+
+int * get_edges_ordered_by_cost_distance(vertex * v, int cost)
+{
+  int * distances = (int*) malloc(v->degree * sizeof(int));
+  edge_diff * diff = (edge_diff*) malloc(v->degree * sizeof(edge_diff));
+  for (int i = 0; i < v->degree; ++i)
+    {
+      diff[i].e = &v->edges[i];
+      diff[i].distance = abs(v->edges[i].c + cost);
+      diff[i].i = i;
+    }
+  qsort(diff, v->degree, sizeof(edge_diff), edge_diff_cmp);
+  for (int i = 0; i < v->degree; ++i)
+  {
+    distances[i] = diff[i].i;
+  }
+  free(diff);
+  return distances;
+}
+
+path * new_path (int length)
+{
+  path * p = (path*) malloc(sizeof(path));
+  p->length = length;
+  p->path = (int*) malloc(length * sizeof(int));
+  return p;
+}
+
 void free_path (path * p)
 {
   free(p->path);
 }
 
+void path_print(path * p)
+{
+  for (int i = 0; i < p->length; ++i)
+    {
+      printf("%d ", p->path[i]);
+    }
+  printf("\n");
+}
 
 path traverse (graph * g)
 {
@@ -94,7 +164,7 @@ void graph_read_edges (graph * g, FILE * fs)
       i += 1;
     }
   //TODO calculate M
-  g->bigM = 0;
+  g->bigM = 9999999;
 }
 
 void graph_init_vertices (graph * g)
@@ -179,18 +249,65 @@ int cbtsp_o(graph * g, path * p)
   return abs(o);
 }
 
+path * ch_nearest_neighbor (graph * g, int start)
+{
+  int available_length = g->n - 1;
+  int * available = (int*) malloc(available_length * sizeof(int));
+  for (int i = 0; i < available_length; ++i)
+  {
+    available[i] = (i < start) ? i : i + 1;
+  }
+
+  int path_i = 0;
+  int v = start;
+  int c = 0;
+  path * p = new_path(g->n + 1);
+  p->path[path_i++] = v;
+  do
+    {
+      int i = 0;
+      edge next_v;
+      int * available_v;
+      int * distance_indices = get_edges_ordered_by_cost_distance(&g->vertices[v], c);
+      do
+	{
+	  next_v = g->vertices[v].edges[distance_indices[i++]];
+	  available_v = (int*) bsearch(&next_v.v2, available, available_length, sizeof(int), cmp_int);
+	}
+      while (i < g->vertices[v].degree && available_v == NULL);
+      if (available_v == NULL)
+	{
+	  c += g->bigM;
+	  p->path[path_i++] = available[--available_length];
+	} 
+      else
+	{
+	  int available_i = available_v - available;
+	  available_length -= 1;
+	  for (int i = available_i; i < available_length; ++i)
+	    {
+	      available[i] = available[i + 1];
+	    }
+	  c += next_v.c;
+	  v = next_v.v2;
+	  p->path[path_i++] = v;
+	}
+      free(distance_indices);
+    }
+  while (available_length > 0);
+  p->path[path_i++] = start;
+  free(available);
+  return p;
+}
+
 int main (int argc, char** argv)
 {
-  graph * g = graph_from_file(argv[1]);  
-  path p = traverse(g);  
-  printf("path: ");
-  for (int i = 0; i < p.length; ++i)
-    {
-      printf("%d ", p.path[i]);
-    }
-  int o = cbtsp_o (g, &p);
-  printf("costs %d\n", o);
-  free_path(&p);
+  graph * g = graph_from_file(argv[1]);
+  path * p = ch_nearest_neighbor(g, atoi(argv[2]));
+  //path_print(p);
+  int o = cbtsp_o (g, p);
+  printf("%d\n", o);
+  free_path(p);
   free_graph(g);
   return 0;
 }
