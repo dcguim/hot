@@ -1,5 +1,6 @@
+#include <stdlib.h>
 #include <stdio.h>
-
+#include <math.h>
 
 #include "hamilt.h"
 #include "const_heu.h"
