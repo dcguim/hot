@@ -93,6 +93,7 @@ void free_graph (graph * g)
     {
       free(g->vertices[i].edges);
     }
+  free(g->edges);
   free(g->vertices);
   free(g);
 }
@@ -107,14 +108,23 @@ int calculate_bigm(graph * g)
   return bigM+1;
 }
 
-
 void graph_read_edges (graph * g, FILE * fs)
 {
-  int i = 0, k = 0;
-  while (k != -1)
+  int i = 0, k;
+  int id1, id2, c;
+  for (;;)
     {
-      k = fscanf(fs, "%d %d %d\n",
-            &(g->edges[i].v1.id), &(g->edges[i].v2.id), &(g->edges[i].c));
+      k = fscanf(fs, "%d %d %d", &id1, &id2, &c);
+      if (k == 3)
+	{
+	  g->edges[i].v1.id = id1;
+	  g->edges[i].v2.id = id2;
+	  g->edges[i].c = c;
+	}
+      else
+	{
+	  break;
+	}
       i += 1;
     }
   g->bigM = calculate_bigm(g);
@@ -138,8 +148,9 @@ void graph_init_vertices (graph * g)
 
   for (int i = 0; i < n; ++i)
     {
-      printf("deg [%d]: %d\n", i,degrees[i]);
+      printd("deg [%d]: %d\n", i, degrees[i]);
     }
+
   // Create the adj list on the vertices
   vertex * v;
   for (int i = 0; i < n; ++i)
@@ -162,7 +173,6 @@ void graph_init_vertices (graph * g)
       t.c = e.c;
       v->edges[--degrees[e.v2.id]] = t;
     }
-  free(g->edges);
   free(degrees);
 }
 
@@ -171,16 +181,15 @@ graph * graph_from_file (char * file)
   int n, m;
   FILE * fs;
   fs = fopen(file, "r");
-  int i;
   fscanf(fs, "%d %d", &n, &m);
   graph * g = new_graph(n, m);
   graph_read_edges (g, fs);
   fclose(fs);
-  printf("m:%d, n:%d\nedges:\n",g->m, g->n);
-  for (i=0; i<g->m;i++)
+  printd("m:%d, n:%d\nedges:\n", g->m, g->n);
+  for (int i = 0; i < g->m; i++)
     {
-      printf("(%d %d) c:%d\n", g->edges[i].v1.id,
-	     g->edges[i].v2.id,g->edges[i].c);
+      printd("(%d %d) c:%d\n", g->edges[i].v1.id,
+	    g->edges[i].v2.id,g->edges[i].c);
     }
   graph_init_vertices(g);
   return g;
@@ -200,14 +209,15 @@ int cbtsp_o(graph * g, path * p)
   return abs(o);
 }
 
-
 int main (int argc, char** argv)
 {
   graph * g = graph_from_file(argv[1]);
   path * p = ch_nearest_neighbor(g, atoi(argv[2]));
-  path_print(p);
   int o = cbtsp_o (g, p);
-  printf("cost of constructed path: %d\n", o);
+  if (o < g->bigM) {
+    printf("%d ", o);
+    path_print(p);
+  }
   free_path(p);
   free_graph(g);
   return 0;

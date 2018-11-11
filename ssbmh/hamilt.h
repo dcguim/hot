@@ -1,4 +1,11 @@
+#ifdef PRINTD
+#define printd(fmt, args...) printf(fmt, ##args)
+#else
+#define printd(fmt, args...)
+#endif
+
 struct edge;
+
 typedef struct vertex
 {
   int id;
