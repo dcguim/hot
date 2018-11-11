@@ -3,6 +3,13 @@
 #include "hamilt.h"
 #include "const_heu.h"
 
+typedef struct edge_diff
+{
+  edge * e;
+  int distance;
+  int i;
+} edge_diff;
+
 int edge_diff_cmp (const void * a, const void * b)
 {
   edge_diff * ad = (edge_diff*) a;
@@ -35,7 +42,7 @@ path * ch_nearest_neighbor (graph * g, int start)
       int i = 0;
       edge next_v;
       int * available_v;
-      int * edge_indices = get_edges_ordered_by_closest_to_zero(
+      int * edge_indices = get_edges_ordered_by_distance(
           &g->vertices[v], c);
       do
         {
@@ -76,7 +83,7 @@ path * ch_nearest_neighbor (graph * g, int start)
   return p;
 }
 
-int * get_edges_ordered_by_closest_to_zero(vertex * v, int cost)
+int * get_edges_ordered_by_distance(vertex * v, int cost)
 {
   int * distances = (int*) malloc(v->degree * sizeof(int));
   edge_diff * diff = (edge_diff*) malloc(v->degree * sizeof(edge_diff));
