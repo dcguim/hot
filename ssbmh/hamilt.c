@@ -1,8 +1,8 @@
 #include <stdio.h>
-
-
+#include <stdlib.h>
 #include "hamilt.h"
 #include "const_heu.h"
+#include "ls_heu.h"
 
 int cmp_int (const void * a, const void * b)
 {
@@ -44,6 +44,17 @@ void path_print(path * p)
       printf("%d ", p->path[i]);
     }
   printf("\n");
+}
+
+void edges_print(graph * g)
+{
+  printf("m:%d, n:%d\nedges:\n",g->m, g->n);
+  for (int i=0; i<g->m;i++)
+    {
+      
+      printf("[%d] (%d %d) c:%d\n",i, g->edges[i].v1.id,
+	     g->edges[i].v2.id,g->edges[i].c);
+    }
 }
 
 path traverse (graph * g)
@@ -109,11 +120,13 @@ int calculate_bigm(graph * g)
 
 void graph_read_edges (graph * g, FILE * fs)
 {
+  printf("graph read edges\n");
   int i = 0, k = 0;
   while (k != -1)
     {
       k = fscanf(fs, "%d %d %d\n",
             &(g->edges[i].v1.id), &(g->edges[i].v2.id), &(g->edges[i].c));
+      printf("%d (%d %d)",i,g->edges[i].v1.id, g->edges[i].v2.id);
       i += 1;
     }
   g->bigM = calculate_bigm(g);
@@ -161,7 +174,7 @@ void graph_init_vertices (graph * g)
       t.c = e.c;
       v->edges[--degrees[e.v2.id]] = t;
     }
-  free(g->edges);
+  //free(g->edges);
   free(degrees);
 }
 
@@ -170,22 +183,14 @@ graph * graph_from_file (char * file)
   int n, m;
   FILE * fs;
   fs = fopen(file, "r");
-  int i;
   fscanf(fs, "%d %d", &n, &m);
   graph * g = new_graph(n, m);
   graph_read_edges (g, fs);
-  fclose(fs);
-  printf("m:%d, n:%d\nedges:\n",g->m, g->n);
-  for (i=0; i<g->m;i++)
-    {
-      printf("(%d %d) c:%d\n", g->edges[i].v1.id,
-	     g->edges[i].v2.id,g->edges[i].c);
-    }
+  fclose(fs);  
   graph_init_vertices(g);
   return g;
 }
 
-// Objective function for the cost-balanced tsp
 int cbtsp_o(graph * g, path * p)
 {
   int o = 0;
@@ -199,15 +204,37 @@ int cbtsp_o(graph * g, path * p)
   return abs(o);
 }
 
+int feasible(path * p)
+{
+  if (p->path[0] != p->path[p->length])
+    {
+      return -1;
+    }
+  for (int i = 0; i < p->length; i++)
+    {
+      int v = p->path[i];
+      for (int j = i+1; j < p->length; j++)	
+	{
+	  if (p->path[i] == v)
+	    {
+	      return v;
+	    }
+	}
+    }
+  return -2;
+}
+
 
 int main (int argc, char** argv)
 {
   graph * g = graph_from_file(argv[1]);
-  path * p = ch_nearest_neighbor(g, atoi(argv[2]));
-  path_print(p);
-  int o = cbtsp_o (g, p);
-  printf("cost of constructed path: %d\n", o);
-  free_path(p);
+  edges_print(g);  
+  path *  pch = ch_nearest_neighbor(g, atoi(argv[2])); 
+  path_print(pch); 
+  int o = cbtsp_o (g, pch);
+  printf("nearest neighbor cost of constructed path: %d\n", o);
+  pair_edge * neighb = neighb_str(g, pch);
+  free_path(pch);
   free_graph(g);
   return 0;
 }
