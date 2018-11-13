@@ -40,4 +40,5 @@ void path_print(path * p);
 int cmp_int (const void * a, const void * b);
 
 int cmp_cost (const void * a, const void * b);
-  
+
+double rand_double ();

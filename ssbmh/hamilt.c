@@ -1,9 +1,25 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <time.h>
+
+#include "pcg_basic.h"
 
 #include "hamilt.h"
 #include "const_heu.h"
+
+pcg32_random_t rng;
+
+void rand_seed()
+{
+  pcg32_srandom_r(&rng, time(NULL) ^ (intptr_t)&printf, (intptr_t)&rng);
+}
+
+// Returns a random double value in the range [0, 1)
+double rand_double ()
+{
+  return ldexp(pcg32_random_r(&rng), -32);
+}
 
 int cmp_int (const void * a, const void * b)
 {
@@ -22,7 +38,6 @@ int cmp_cost (const void * a, const void * b)
   if (ca > cb) return 1;
   return 0;
 }
-
 
 path * new_path (int length)
 {
@@ -211,8 +226,10 @@ int cbtsp_o(graph * g, path * p)
 
 int main (int argc, char** argv)
 {
+  rand_seed();
+
   graph * g = graph_from_file(argv[1]);
-  path * p = ch_nearest_neighbor(g, atoi(argv[2]));
+  path * p = ch_nearest_neighbor_randomized(g, atoi(argv[2]), 0.1);
   int o = cbtsp_o (g, p);
   if (o < g->bigM) {
     printf("%d ", o);
