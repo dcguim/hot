@@ -30,7 +30,10 @@ path * new_path (int length);
 
 void path_print(path * p);
 
+void edges_print(graph * g);
+
 int cmp_int (const void * a, const void * b);
 
 int cmp_cost (const void * a, const void * b);
   
+int cbtsp_o(graph * g, path * p);

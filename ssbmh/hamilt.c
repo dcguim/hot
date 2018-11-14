@@ -174,7 +174,6 @@ void graph_init_vertices (graph * g)
       t.c = e.c;
       v->edges[--degrees[e.v2.id]] = t;
     }
-  //free(g->edges);
   free(degrees);
 }
 
@@ -233,7 +232,10 @@ int main (int argc, char** argv)
   path_print(pch); 
   int o = cbtsp_o (g, pch);
   printf("nearest neighbor cost of constructed path: %d\n", o);
-  pair_edge * neighb = neighb_str(g, pch);
+  int neighb_len = 0;
+  pair_edge * neighb = neighb_str(g, pch, &neighb_len);
+  printf("neighborhood of size: %d\n",neighb_len);
+  free_pair_edge(neighb, neighb_len);
   free_path(pch);
   free_graph(g);
   return 0;
