@@ -1,4 +1,11 @@
+#ifdef PRINTD
+#define printd(fmt, args...) printf(fmt, ##args)
+#else
+#define printd(fmt, args...)
+#endif
+
 struct edge;
+
 typedef struct vertex
 {
   int id;
@@ -37,3 +44,5 @@ int cmp_int (const void * a, const void * b);
 int cmp_cost (const void * a, const void * b);
   
 int cbtsp_o(graph * g, path * p);
+
+double rand_double();

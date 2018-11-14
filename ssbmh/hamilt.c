@@ -1,8 +1,26 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+#include <time.h>
+#include "pcg_basic.h"
+
 #include "hamilt.h"
 #include "const_heu.h"
 #include "ls_heu.h"
+
+pcg32_random_t rng;
+
+void rand_seed()
+{
+  pcg32_srandom_r(&rng, time(NULL) ^ (intptr_t)&printf, (intptr_t)&rng);
+}
+
+// Returns a random double value in the range [0, 1)
+double rand_double ()
+{
+  return ldexp(pcg32_random_r(&rng), -32);
+}
 
 int cmp_int (const void * a, const void * b)
 {
@@ -21,7 +39,6 @@ int cmp_cost (const void * a, const void * b)
   if (ca > cb) return 1;
   return 0;
 }
-
 
 path * new_path (int length)
 {
@@ -103,6 +120,7 @@ void free_graph (graph * g)
     {
       free(g->vertices[i].edges);
     }
+  free(g->edges);
   free(g->vertices);
   free(g);
 }
@@ -117,16 +135,23 @@ int calculate_bigm(graph * g)
   return bigM+1;
 }
 
-
 void graph_read_edges (graph * g, FILE * fs)
 {
-  printf("graph read edges\n");
-  int i = 0, k = 0;
-  while (k != -1)
+  int i = 0, k;
+  int id1, id2, c;
+  for (;;)
     {
-      k = fscanf(fs, "%d %d %d\n",
-            &(g->edges[i].v1.id), &(g->edges[i].v2.id), &(g->edges[i].c));
-      printf("%d (%d %d)",i,g->edges[i].v1.id, g->edges[i].v2.id);
+      k = fscanf(fs, "%d %d %d", &id1, &id2, &c);
+      if (k == 3)
+	{
+	  g->edges[i].v1.id = id1;
+	  g->edges[i].v2.id = id2;
+	  g->edges[i].c = c;
+	}
+      else
+	{
+	  break;
+	}
       i += 1;
     }
   g->bigM = calculate_bigm(g);
@@ -150,8 +175,9 @@ void graph_init_vertices (graph * g)
 
   for (int i = 0; i < n; ++i)
     {
-      printf("deg [%d]: %d\n", i,degrees[i]);
+      printd("deg [%d]: %d\n", i, degrees[i]);
     }
+
   // Create the adj list on the vertices
   vertex * v;
   for (int i = 0; i < n; ++i)
@@ -185,7 +211,13 @@ graph * graph_from_file (char * file)
   fscanf(fs, "%d %d", &n, &m);
   graph * g = new_graph(n, m);
   graph_read_edges (g, fs);
-  fclose(fs);  
+  fclose(fs);
+  printd("m:%d, n:%d\nedges:\n", g->m, g->n);
+  for (int i = 0; i < g->m; i++)
+    {
+      printd("(%d %d) c:%d\n", g->edges[i].v1.id,
+	    g->edges[i].v2.id,g->edges[i].c);
+    }
   graph_init_vertices(g);
   return g;
 }
@@ -202,6 +234,7 @@ int cbtsp_o(graph * g, path * p)
     }
   return abs(o);
 }
+
 
 int feasible(path * p)
 {
@@ -226,8 +259,16 @@ int feasible(path * p)
 
 int main (int argc, char** argv)
 {
+  rand_seed();
+
   graph * g = graph_from_file(argv[1]);
-  edges_print(g);  
+  edges_print(g);
+  path * p = ch_nearest_neighbor_randomized(g, atoi(argv[2]), 0.1);
+  int o = cbtsp_o (g, p);
+  if (o < g->bigM) {
+    printf("%d ", o);
+    path_print(p);
+  }
   path *  pch = ch_nearest_neighbor(g, atoi(argv[2])); 
   path_print(pch); 
   int o = cbtsp_o (g, pch);
@@ -237,6 +278,7 @@ int main (int argc, char** argv)
   printf("neighborhood of size: %d\n",neighb_len);
   free_pair_edge(neighb, neighb_len);
   free_path(pch);
+  free_path(p);
   free_graph(g);
   return 0;
 }
