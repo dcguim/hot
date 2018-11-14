@@ -41,12 +41,12 @@ to the given [cost] is closest to zero.
 ####  Usage
 ##### Compilation
 ```sh
-$ gcc -Wall hamilt.c const_heu.c ls_heu.c -o hamilt
+$ gcc -Wall hamilt.c const_heu.c ls_heu.c pcg_basic.c -o hamilt
 ```
 
 with debug output enabled:
 ```sh
-$ gcc -Wall -DPRINTD hamilt.c const_heu.c -o hamilt
+$ gcc -Wall -DPRINTD hamilt.c const_heu.c ls_heu.c pcg_basic.c -o hamilt
 ```
 ##### Execution
 ```sh
