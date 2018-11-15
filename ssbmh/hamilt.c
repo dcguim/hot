@@ -9,17 +9,15 @@
 #include "const_heu.h"
 #include "ls_heu.h"
 
-pcg32_random_t rng;
-
 void rand_seed()
 {
-  pcg32_srandom_r(&rng, time(NULL) ^ (intptr_t)&printf, (intptr_t)&rng);
+  pcg32_srandom(time(NULL) ^ (intptr_t)&printf, (intptr_t)&rand_seed);
 }
 
 // Returns a random double value in the range [0, 1)
 double rand_double ()
 {
-  return ldexp(pcg32_random_r(&rng), -32);
+  return ldexp(pcg32_random(), -32);
 }
 
 int cmp_int (const void * a, const void * b)
