@@ -6,6 +6,8 @@
 
 struct edge;
 
+typedef long long int cost_t;
+
 typedef struct vertex
 {
   int id;
@@ -16,12 +18,13 @@ typedef struct vertex
 typedef struct edge
 {
   vertex v1, v2;
-  int c;
+  cost_t c;
 } edge;
 
 typedef struct graph
 {
-  int n, m, bigM;
+  int n, m;
+  cost_t bigM;
   edge * edges;
   vertex * vertices;
 } graph;
@@ -32,7 +35,6 @@ typedef struct path
   int length;
 } path;
 
-
 path * new_path (int length);
 
 void path_print(path * p);
@@ -42,7 +44,7 @@ void edges_print(graph * g);
 int cmp_int (const void * a, const void * b);
 
 int cmp_cost (const void * a, const void * b);
-  
-int cbtsp_o(graph * g, path * p);
+
+cost_t cbtsp_o(graph * g, path * p);
 
 double rand_double();

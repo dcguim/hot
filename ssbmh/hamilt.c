@@ -29,10 +29,13 @@ int cmp_int (const void * a, const void * b)
   return 0;
 }
 
-int cmp_cost (const void * a, const void * b)
+int cmp_edge_cost (const void * a, const void * b)
 {
-  int ca = abs(((edge*) a)->c);
-  int cb = abs(((edge*) b)->c);
+  edge * edge_a = *(edge**)a;
+  edge * edge_b = *(edge**)b;
+
+  int ca = edge_a->c;
+  int cb = edge_b->c;
   if (ca < cb) return -1;
   if (ca > cb) return 1;
   return 0;
@@ -123,14 +126,26 @@ void free_graph (graph * g)
   free(g);
 }
 
-int calculate_bigm(graph * g)
+cost_t calculate_bigm(graph * g)
 {
-  int bigM = 0;
-  for (int i=0; i<g->m;i++)
-    {
-      bigM += abs(g->edges[i].c);
-    }
-  return bigM+1;
+  edge ** edges = (edge**) malloc(g->m * sizeof(edge*));
+  for (int i = 0; i < g->m; ++i)
+  {
+    edges[i] = g->edges + i;
+  }
+  qsort(edges, g->m, sizeof(edge*), cmp_edge_cost);
+
+  cost_t minSum = 0, maxSum = 0;
+  for (int i = 0; i < g->n; ++i) {
+    minSum += edges[i]->c;
+    maxSum += edges[g->m - 1 - i]->c;
+  }
+
+  free(edges);
+
+  cost_t absMinSum = llabs(minSum);
+  cost_t absMaxSum = llabs(maxSum);
+  return 2 * (absMinSum < absMaxSum ? absMaxSum : absMinSum);
 }
 
 void graph_read_edges (graph * g, FILE * fs)
@@ -220,19 +235,18 @@ graph * graph_from_file (char * file)
   return g;
 }
 
-int cbtsp_o(graph * g, path * p)
+cost_t cbtsp_o(graph * g, path * p)
 {
-  int o = 0;
-  int l = p->length - 1;
+  cost_t o = 0;
+  cost_t l = p->length - 1;
   edge * e;
   for (int i = 0; i < l; ++i)
     {
       e = find_edge_from_to (g, p->path[i], p->path[i + 1]);
       o += (e == NULL) ? g->bigM : e->c;
     }
-  return abs(o);
+  return llabs(o);
 }
-
 
 int feasible(path * p)
 {
@@ -262,15 +276,13 @@ int main (int argc, char** argv)
   graph * g = graph_from_file(argv[1]);
   edges_print(g);
   path * p = ch_nearest_neighbor_randomized(g, atoi(argv[2]), 0.1);
-  int o = cbtsp_o (g, p);
-  if (o < g->bigM) {
-    printf("%d ", o);
-    path_print(p);
-  }
+  cost_t o = cbtsp_o (g, p);
+  printf("randomized nearest neighbor cost of constructed path: %lld\n", o);
+  path_print(p);
   path *  pch = ch_nearest_neighbor(g, atoi(argv[2])); 
+  o = cbtsp_o (g, pch);
+  printf("nearest neighbor cost of constructed path: %lld\n", o);
   path_print(pch); 
-  int o = cbtsp_o (g, pch);
-  printf("nearest neighbor cost of constructed path: %d\n", o);
   int neighb_len = 0;
   pair_edge * neighb = neighb_str(g, pch, &neighb_len);
   printf("neighborhood of size: %d\n",neighb_len);
