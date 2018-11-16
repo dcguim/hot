@@ -35,8 +35,11 @@ to the given [cost] is closest to zero.
 ###### structs: 
 - pair_edge
 ###### functions
- - edge * neighb_str(graph *g, path * p):
- Returns a array of pair_edge where the even k-th pair represent the edge in the path and the odd k+1-th pair the edge not in the path that would be substituted.
+ - pair_edge * neighb_str(graph *g, path * p,int * size);
+ Returns a array of pair_edge where the even k-th pair represent the edge in the path and the odds k+1-th pair the edge not in the path that would be substituted by. It takes as input the graph, a solution in form of a path and a pointer to an integer which will contain the size of the neighborhood
+ - pair_edge * new_pair_edge(int n): Allocate a new pair edge array of size n
+ - void free_pair_edge(pair_edge* p, int n): Free a pair edge array of size n
+
 
 ####  Usage
 ##### Compilation

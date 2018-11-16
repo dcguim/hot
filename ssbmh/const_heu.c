@@ -27,7 +27,7 @@ edge ** get_edges_ordered_by_distance (vertex * v, int cost)
   for (int i = 0; i < v->degree; ++i)
     {
       diff[i].e = v->edges + i;
-      diff[i].distance = abs(v->edges[i].c + cost);
+      diff[i].distance = labs(v->edges[i].c + cost);
     }
   qsort(diff, v->degree, sizeof(edge_diff), edge_diff_cmp);
   for (int i = 0; i < v->degree; ++i)

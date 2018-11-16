@@ -70,7 +70,7 @@ void edges_print(graph * g)
   for (int i=0; i<g->m;i++)
     {
       
-      printf("[%d] (%d %d) c:%d\n",i, g->edges[i].v1.id,
+      printf("[%d] (%d %d) c:%lld\n",i, g->edges[i].v1.id,
 	     g->edges[i].v2.id,g->edges[i].c);
     }
 }
@@ -228,7 +228,7 @@ graph * graph_from_file (char * file)
   printd("m:%d, n:%d\nedges:\n", g->m, g->n);
   for (int i = 0; i < g->m; i++)
     {
-      printd("(%d %d) c:%d\n", g->edges[i].v1.id,
+      printd("(%d %d) c:%lld\n", g->edges[i].v1.id,
 	    g->edges[i].v2.id,g->edges[i].c);
     }
   graph_init_vertices(g);
@@ -250,21 +250,24 @@ cost_t cbtsp_o(graph * g, path * p)
 
 int feasible(path * p)
 {
-  if (p->path[0] != p->path[p->length])
+  if (p->path[0] != p->path[p->length-1])
     {
       return -1;
     }
   for (int i = 0; i < p->length; i++)
     {
+      printf("%d ",p->path[i]);
       int v = p->path[i];
       for (int j = i+1; j < p->length; j++)	
 	{
 	  if (p->path[i] == v)
 	    {
+	      printf("\n");
 	      return v;
 	    }
 	}
     }
+  printf("\n");
   return -2;
 }
 
@@ -284,8 +287,18 @@ int main (int argc, char** argv)
   printf("nearest neighbor cost of constructed path: %lld\n", o);
   path_print(pch); 
   int neighb_len = 0;
-  pair_edge * neighb = neighb_str(g, pch, &neighb_len);
+  //pair_edge * neighb =
+  pair_edge* neighb = neighb_str(g, pch, &neighb_len);
   printf("neighborhood of size: %d\n",neighb_len);
+  for (int i=0;i<neighb_len;i++)
+    {
+      if (i%2 == 0)
+	printf("\n");
+      else
+	printf("-> ");
+      printf("(%d %d) , (%d %d) ",neighb[i].e1->v1.id,neighb[i].e1->v2.id,neighb[i].e2->v1.id,neighb[i].e2->v2.id);
+      
+    }
   free_pair_edge(neighb, neighb_len);
   free_path(pch);
   free_path(p);
