@@ -282,12 +282,12 @@ int main (int argc, char** argv)
   cost_t o = cbtsp_o (g, p);
   printf("randomized nearest neighbor cost of constructed path: %lld\n", o);
   path_print(p);
-  path *  pch = ch_nearest_neighbor(g, atoi(argv[2])); 
+  path *  pch = ch_nearest_neighbor(g, atoi(argv[2]));
   o = cbtsp_o (g, pch);
   printf("nearest neighbor cost of constructed path: %lld\n", o);
-  path_print(pch); 
+  path_print(pch);
+  
   int neighb_len = 0;
-  //pair_edge * neighb =
   pair_edge* neighb = neighb_str(g, pch, &neighb_len);
   printf("neighborhood of size: %d\n",neighb_len);
   for (int i=0;i<neighb_len;i++)
@@ -297,7 +297,6 @@ int main (int argc, char** argv)
       else
 	printf("-> ");
       printf("(%d %d) , (%d %d) ",neighb[i].e1->v1.id,neighb[i].e1->v2.id,neighb[i].e2->v1.id,neighb[i].e2->v2.id);
-      
     }
   free_pair_edge(neighb, neighb_len);
   free_path(pch);

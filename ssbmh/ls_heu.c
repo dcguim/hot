@@ -84,7 +84,8 @@ int edges_equal(edge* e1, edge* e2)
     return 1;
   return 0;
 }
-pair_edge* create_neighborhood(graph* g, int* avail, int avail_len, pair_edge* path_comb,int pncomb, int* neigh_len)
+pair_edge* create_neighborhood(graph* g, int* avail, int avail_len,
+			       pair_edge* path_comb,int pncomb, int* neigh_len)
 {
   // Create a neighborhood array which will represent every pair of edge that has
   // a matching pair of edge from the available edge_comb array which can be switched
@@ -96,11 +97,6 @@ pair_edge* create_neighborhood(graph* g, int* avail, int avail_len, pair_edge* p
       neighind[i][2] = -1;
       if (edges_connectedp(path_comb[i].e1,path_comb[i].e2) == 0)
 	{
-	  printf("e1:(%d %d), e2:(%d %d) not connected \n",
-		path_comb[i].e1->v1.id,path_comb[i].e1->v2.id,path_comb[i].e2->v1.id,
-		path_comb[i].e2->v2.id);
-	  // make sure either (path_comb[i].e1.v1, path_comb[i].e2.v2) are in the available
-	  // or path_comb[i].e1.v1, path_comb[i].e2.v1 or ... 2 more are in the available
 	  int avail1 = -1;
 	  int avail2 = -1;
 	  for (int j=0;j<avail_len;j++)
@@ -110,7 +106,6 @@ pair_edge* create_neighborhood(graph* g, int* avail, int avail_len, pair_edge* p
 	      e.v2 = path_comb[i].e2->v1;
 	      if (edges_equal(&(g->edges[avail[j]]), &e) == 1)		   
 		{
-		  printf("graph[%d]:edge %d %d\n",j,g->edges[avail[j]].v1.id,g->edges[avail[j]].v2.id);
 		  avail1 = avail[j];
 		  break;
 		}		    
@@ -122,21 +117,15 @@ pair_edge* create_neighborhood(graph* g, int* avail, int avail_len, pair_edge* p
 	      e.v2 = path_comb[i].e2->v2;
 	      if (edges_equal(&(g->edges[avail[j]]), &e) == 1)
 		{
-		  printf("graph[%d]:edge %d %d\n",j,g->edges[avail[j]].v1.id,g->edges[avail[j]].v2.id);
 		  avail2 = avail[j];
 		  break;
 		}		    
 	    }
 	  if (avail1 > -1 && avail2>-1)
 	    {
-	      printf("edges no: %d, %d replaced by: (%d , %d) (%d , %d)\n",
-		     avail1,avail2,
-		     path_comb[i].e1->v1.id,path_comb[i].e1->v2.id,
-		     path_comb[i].e2->v1.id,path_comb[i].e2->v2.id);
 	      neighind[i][0] = avail1;
 	      neighind[i][1] = avail2;
-	      neighind[i][2] = i;
-	      
+	      neighind[i][2] = i;	      
 	    }
 	}
     }
@@ -175,7 +164,8 @@ const int in_path(edge e,path * p)
 {
   for (int i = 0; i < p->length - 1; i++)
     {
-      if (p->path[i] == e.v1.id && p->path[i+1] == e.v2.id)
+      if ((p->path[i] == e.v1.id && p->path[i+1] == e.v2.id) ||
+	  (p->path[i] == e.v2.id && p->path[i+1] == e.v1.id))
 	{
 	  return 1;
 	}
@@ -192,13 +182,12 @@ pair_edge * neighb_str(graph *g, path * p,int* size)
   int j=0;
   for (int i=0; i<g->m;i++)
     {
-      if (in_path(g->edges[i],p) == 0)
+       if (in_path(g->edges[i],p) == 0)
   	{
 	  available[j] = i;
   	  j++;
   	}
     }
-
   // Get all the combinations of edges in the path
   int path_ncomb=no_comb(p->length-2);
   pair_edge* path_comb = new_pair_edge(path_ncomb);
