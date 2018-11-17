@@ -49,6 +49,36 @@ path * new_path (int length)
   return p;
 }
 
+path * copy_path (path* p)
+{
+  path * c = new_path(p->length);
+  c->length = p->length;
+  for (int i = 0; i < c->length; i++)
+    {
+      c->path[i] = p->path[i];
+    }
+  return c;
+}
+path * assign_path (path* a, path* p)
+{
+  for (int i = 0; i < a->length; i++)
+    {
+      a->path[i] = p->path[i];
+    }
+  return a;
+}
+
+path* invert (path* p, int beg, int end)
+{
+  for (int i = 0; i < floor((end-beg+1)/2); i++)
+    {
+      int aux = p->path[beg + i];
+      p->path[beg + i] = p->path[end - i];
+      p->path[end - i] = aux;
+    }
+  return p;
+}
+
 void free_path (path * p)
 {
   free(p->path);
@@ -254,20 +284,17 @@ int feasible(path * p)
     {
       return -1;
     }
-  for (int i = 0; i < p->length; i++)
+  for (int i = 1; i < p->length; i++)
     {
-      printf("%d ",p->path[i]);
       int v = p->path[i];
       for (int j = i+1; j < p->length; j++)	
 	{
-	  if (p->path[i] == v)
+	  if (p->path[j] == v)
 	    {
-	      printf("\n");
 	      return v;
 	    }
 	}
     }
-  printf("\n");
   return -2;
 }
 
@@ -278,29 +305,33 @@ int main (int argc, char** argv)
 
   graph * g = graph_from_file(argv[1]);
   edges_print(g);
-  path * p = ch_nearest_neighbor_randomized(g, atoi(argv[2]), 0.1);
-  cost_t o = cbtsp_o (g, p);
-  printf("randomized nearest neighbor cost of constructed path: %lld\n", o);
-  path_print(p);
-  path *  pch = ch_nearest_neighbor(g, atoi(argv[2]));
-  o = cbtsp_o (g, pch);
-  printf("nearest neighbor cost of constructed path: %lld\n", o);
-  path_print(pch);
+  /* path * p = ch_nearest_neighbor_randomized(g, atoi(argv[2]), 0.1); */
+  /* cost_t o = cbtsp_o (g, p); */
+  /* printf("randomized nearest neighbor cost of constructed path: %lld\n", o); */
+  /* path_print(p); */
+  /* path *  pch = ch_nearest_neighbor(g, atoi(argv[2])); */
+  /* o = cbtsp_o (g, pch); */
+  /* printf("nearest neighbor cost of constructed path: %lld\n", o); */
+  /* path_print(pch); */
   
-  int neighb_len = 0;
-  pair_edge* neighb = neighb_str(g, pch, &neighb_len);
-  printf("neighborhood of size: %d\n",neighb_len);
-  for (int i=0;i<neighb_len;i++)
-    {
-      if (i%2 == 0)
-	printf("\n");
-      else
-	printf("-> ");
-      printf("(%d %d) , (%d %d) ",neighb[i].e1->v1.id,neighb[i].e1->v2.id,neighb[i].e2->v1.id,neighb[i].e2->v2.id);
-    }
-  free_pair_edge(neighb, neighb_len);
+  path * pch = new_path(g->n+1);
+  pch->path[0] =0;
+  pch->path[1] =1;
+  pch->path[2] =3;
+  pch->path[3] =6;
+  pch->path[4] =7; 
+  pch->path[5] =9;
+  pch->path[6] =8;
+  pch->path[7] =5;  
+  pch->path[8] =4;
+  pch->path[9] =2;
+  pch->path[10] =0;
+
+  // path* blsp =
+  ls_best_improv(g,pch);
+
   free_path(pch);
-  free_path(p);
+  //free_path(p);
   free_graph(g);
   return 0;
 }

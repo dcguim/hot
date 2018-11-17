@@ -37,6 +37,8 @@ typedef struct path
 
 path * new_path (int length);
 
+void free_path (path * p);
+
 void path_print(path * p);
 
 void edges_print(graph * g);
@@ -48,3 +50,11 @@ int cmp_cost (const void * a, const void * b);
 cost_t cbtsp_o(graph * g, path * p);
 
 double rand_double();
+
+path* invert (path* p, int beg, int end);
+
+int feasible(path * p);
+
+path * copy_path (path* p);
+
+path * assign_path (path* a, path* p);
