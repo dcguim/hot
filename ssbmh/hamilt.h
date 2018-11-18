@@ -51,6 +51,8 @@ cost_t cbtsp_o(graph * g, path * p);
 
 double rand_double();
 
+edge * find_edge (graph * g, int a, int b);
+
 path* invert (path* p, int beg, int end);
 
 int feasible(path * p);

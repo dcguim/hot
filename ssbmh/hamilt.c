@@ -121,7 +121,7 @@ path traverse (graph * g)
   return p;
 }
 
-edge * find_edge_from_to (graph * g, int a, int b)
+edge * find_edge (graph * g, int a, int b)
 {
   vertex v = g->vertices[a];
   int d = v.degree;
@@ -272,7 +272,7 @@ cost_t cbtsp_o(graph * g, path * p)
   edge * e;
   for (int i = 0; i < l; ++i)
     {
-      e = find_edge_from_to (g, p->path[i], p->path[i + 1]);
+      e = find_edge (g, p->path[i], p->path[i + 1]);
       o += (e == NULL) ? g->bigM : e->c;
     }
   return llabs(o);
@@ -305,33 +305,20 @@ int main (int argc, char** argv)
 
   graph * g = graph_from_file(argv[1]);
   edges_print(g);
-  /* path * p = ch_nearest_neighbor_randomized(g, atoi(argv[2]), 0.1); */
-  /* cost_t o = cbtsp_o (g, p); */
-  /* printf("randomized nearest neighbor cost of constructed path: %lld\n", o); */
-  /* path_print(p); */
-  /* path *  pch = ch_nearest_neighbor(g, atoi(argv[2])); */
-  /* o = cbtsp_o (g, pch); */
-  /* printf("nearest neighbor cost of constructed path: %lld\n", o); */
-  /* path_print(pch); */
+  path * p = ch_nearest_neighbor_randomized(g, atoi(argv[2]), 0.1);
+  cost_t o = cbtsp_o (g, p);
+  printf("randomized nearest neighbor cost of constructed path: %lld\n", o);
+  path_print(p);
+  path *  pch = ch_nearest_neighbor(g, atoi(argv[2]));
+  o = cbtsp_o (g, pch);
+  printf("nearest neighbor cost of constructed path: %lld\n", o);
+  path_print(pch);
   
-  path * pch = new_path(g->n+1);
-  pch->path[0] =0;
-  pch->path[1] =1;
-  pch->path[2] =3;
-  pch->path[3] =6;
-  pch->path[4] =7; 
-  pch->path[5] =9;
-  pch->path[6] =8;
-  pch->path[7] =5;  
-  pch->path[8] =4;
-  pch->path[9] =2;
-  pch->path[10] =0;
-
   // path* blsp =
   ls_best_improv(g,pch);
 
   free_path(pch);
-  //free_path(p);
+  free_path(p);
   free_graph(g);
   return 0;
 }

@@ -69,7 +69,8 @@ void path_combinations(path* p, pair_edge* comb, int r)
   return;
 }
 int edges_connectedp(edge* e1, edge* e2)
-{
+ {  
+  //printf("e1 %d %d, e2 %d %d\n", e1->v1.id,e1->v2.id,e2->v1.id,e2->v2.id);
   if (e1->v1.id == e2->v1.id || e1->v1.id == e2->v2.id ||
       e1->v2.id == e2->v1.id || e1->v2.id == e2->v2.id)
     {
@@ -123,6 +124,7 @@ pair_edge* create_neighborhood(graph* g, int* avail, int avail_len,
 	    }
 	  if (avail1 > -1 && avail2>-1)
 	    {
+	      printf("[%d] %d %d\n",i, avail1,avail2);
 	      neighind[i][0] = avail1;
 	      neighind[i][1] = avail2;
 	      neighind[i][2] = i;	      
@@ -144,13 +146,13 @@ pair_edge* create_neighborhood(graph* g, int* avail, int avail_len,
   pair_edge* neighb = new_pair_edge(*neigh_len);
   int i = 0;
   int j = 0;
-  while(neighind[i][0] > -1)
-    {
+  while(neighind[i][0] > -1 && j < *neigh_len)
+    {       
       neighb[j].e1->v1.id = path_comb[neighind[i][2]].e1->v1.id;
       neighb[j].e1->v2.id = path_comb[neighind[i][2]].e1->v2.id;
       neighb[j].e2->v1.id = path_comb[neighind[i][2]].e2->v1.id;
       neighb[j].e2->v2.id = path_comb[neighind[i][2]].e2->v2.id;
-      
+
       neighb[j+1].e1->v1.id = g->edges[neighind[i][0]].v1.id;
       neighb[j+1].e1->v2.id = g->edges[neighind[i][0]].v2.id;
       neighb[j+1].e2->v1.id = g->edges[neighind[i][1]].v2.id;
@@ -188,6 +190,7 @@ pair_edge * neighb_str(graph *g, path * p,int* size)
   	  j++;
   	}
     }
+
   // Get all the combinations of edges in the path
   int path_ncomb=no_comb(p->length-2);
   pair_edge* path_comb = new_pair_edge(path_ncomb);
@@ -279,7 +282,7 @@ path* ls_best_improv (graph* g, path* p)
     return p;
   else
     {
-      printf("solution best improv:\n");
+      printf("solution best improv with cost %d:\n", basecost);
       path_print(sol);
       return sol;      
     }
