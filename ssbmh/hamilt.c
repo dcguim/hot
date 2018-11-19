@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -8,6 +9,7 @@
 #include "hamilt.h"
 #include "const_heu.h"
 #include "ls_heu.h"
+#include "grasp.h"
 
 void rand_seed()
 {
@@ -96,11 +98,11 @@ void path_print(path * p)
 
 void edges_print(graph * g)
 {
-  printf("m:%d, n:%d\nedges:\n",g->m, g->n);
+  printd("m:%d, n:%d\nedges:\n",g->m, g->n);
   for (int i=0; i<g->m;i++)
     {
       
-      printf("[%d] (%d %d) c:%lld\n",i, g->edges[i].v1.id,
+      printd("[%d] (%d %d) c:%lld\n",i, g->edges[i].v1.id,
 	     g->edges[i].v2.id,g->edges[i].c);
     }
 }
@@ -298,27 +300,122 @@ int feasible(path * p)
   return -2;
 }
 
+graph * g;
+
+path * grasp_nearest_neigbor (double r)
+{
+  int start_vertex_id = floor(rand_double() * g->n);
+  return ch_nearest_neighbor_randomized(g, start_vertex_id, r);
+}
 
 int main (int argc, char** argv)
 {
   rand_seed();
 
-  graph * g = graph_from_file(argv[1]);
-  edges_print(g);
-  path * p = ch_nearest_neighbor_randomized(g, atoi(argv[2]), 0.1);
-  cost_t o = cbtsp_o (g, p);
-  printf("randomized nearest neighbor cost of constructed path: %lld\n", o);
-  path_print(p);
-  path *  pch = ch_nearest_neighbor(g, atoi(argv[2]));
-  o = cbtsp_o (g, pch);
-  printf("nearest neighbor cost of constructed path: %lld\n", o);
-  path_print(pch);
-  
-  // path* blsp =
-  ls_best_improv(g,pch);
+  char * file = argv[1];
+  char * alg = argv[2];
 
-  free_path(pch);
+  g = graph_from_file(file);
+  cost_t cost;
+  path * p;
+
+  // Deterministic construction heuristic
+  if (strcmp("det_ch", alg) == 0)
+    {
+      if (argc < 4 || atoi(argv[3]) == 0)
+      {
+	printf("USAGE: %s START_VERTEX_ID\n", alg);
+	return 2;
+      }
+
+      p = ch_nearest_neighbor(g, atoi(argv[3]));
+      cost = cbtsp_o(g, p);
+    }
+  // Randomized construction heuristic
+  else if (strcmp("rand_ch", alg) == 0)
+    {
+      char * end;
+      if (argc < 4 || strtod(argv[3], &end) == 0)
+      {
+	printf("USAGE: %s RANDOMIZATION_FACTOR\n", alg);
+	return 2;
+      }
+
+      int start = floor(rand_double() * g->n);
+      p = ch_nearest_neighbor_randomized(g, start, strtod(argv[3], &end));
+      cost = cbtsp_o(g, p);
+    }
+  // Local search
+  else if (strcmp("ls", alg) == 0)
+    {
+      if (argc < 6 || atoi(argv[3]) == 0)
+      {
+	printf("USAGE: %s START_VERTEX_ID NEIGHBORHOOD STEP_FN\n", alg);
+	return 2;
+      }
+
+      path * init_p = ch_nearest_neighbor(g, atoi(argv[3]));
+
+      char * nb = argv[4];
+      char * step = argv[5];
+      if (strcmp("2opt", nb) == 0)
+	{
+	  if (strcmp("best_improv", step) == 0)
+	    {
+	      p = ls_best_improv(g, init_p);
+	      cost = cbtsp_o(g, p);
+	    }
+	  else if (strcmp("first_improv", step) == 0)
+	    {
+	      printf("NOT IMPLEMENTED\n");
+	      return 3;
+	    }
+	  else if (strcmp("random" , step))
+	    {
+	      printf("NOT IMPLEMENTED\n");
+	      return 3;
+	    }
+	}
+      else if (strcmp("3opt", nb) == 0)
+	{
+	  printf("NOT IMPLEMENTED\n");
+	  return 3;
+	}
+      else if (strcmp("2.5opt", nb) == 0)
+	{
+	  printf("NOT IMPLEMENTED\n");
+	  return 3;
+	}
+      else
+	{
+	  printf("Available neighborhoods: 2opt\n");
+	  return 2;
+	}
+      free_path(init_p);
+    }
+  // GRASP
+  else if (strcmp("grasp", alg) == 0)
+    {
+      char * end;
+      if (argc < 5 || strtod(argv[3], &end) == 0 || atoi(argv[4]) == 0)
+      {
+	printf("USAGE: %s RANDOMIZATION_FACTOR RUNTIME_SECONDS\n", alg);
+	return 2;
+      }
+
+      p = h_grasp(g, strtod(argv[3], &end), grasp_nearest_neigbor,
+	  ls_best_improv, atoi(argv[4]));
+      cost = cbtsp_o(g, p);
+    }
+  else
+    {
+      printf("Invalid algorithm name \"%s\"\n", alg);
+      printf("Available algorithms: det_ch, rand_ch, ls, grasp\n");
+      return 1;
+    }
+
+  printf("%lld ", cost);
+  path_print(p);
   free_path(p);
-  free_graph(g);
   return 0;
 }

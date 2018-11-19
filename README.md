@@ -45,17 +45,18 @@ to the given [cost] is closest to zero.
 ####  Usage
 ##### Compilation
 ```sh
-$ gcc -Wall hamilt.c const_heu.c ls_heu.c pcg_basic.c -o hamilt
+$ gcc -Wall hamilt.c const_heu.c ls_heu.c pcg_basic.c grasp.c -o hamilt
 ```
 
 with debug output enabled:
 ```sh
-$ gcc -Wall -DPRINTD hamilt.c const_heu.c ls_heu.c pcg_basic.c -o hamilt
+$ gcc -Wall -DPRINTD hamilt.c const_heu.c ls_heu.c pcg_basic.c grasp.c -o hamilt
 ```
 ##### Execution
 ```sh
-$ ./hamilt tests/testname startnode
+$ ./hamilt tests/testname ALGORITHM
 ```
+Available algorithms: det_ch, rand_ch, ls, grasp
 ### Notes / TODOs
 - The edges are dynamically allocated two times, as graph edges and as the the veritices that are connected to each given vertex. Therefore 2*O(exp(n)) which is not efficient, however we will try to preserve the convenience of having this structure while dynamically allocating it only once by pointing to a unique graph structure. This will be done in the future as a efficiency issue.
 - In the ls_heu there are two ways of computing all the combinations of a group of edges, if they are defined by a path or simply as a array of edges, however it may be interesting to change the the struct path to simply an array of edges, instead of storing only the ids, the cost of adapting the code to this mod. is not so big.

@@ -1,3 +1,6 @@
+#ifndef HAMILT_H
+#define HAMILT_H
+
 #ifdef PRINTD
 #define printd(fmt, args...) printf(fmt, ##args)
 #else
@@ -60,3 +63,5 @@ int feasible(path * p);
 path * copy_path (path* p);
 
 path * assign_path (path* a, path* p);
+
+#endif
