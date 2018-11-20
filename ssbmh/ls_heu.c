@@ -63,6 +63,7 @@ void calc_path_combinations(path* p, pair_edge*  result, int start, int index,
   return;
 }
 
+// This function return all 2 combinations of all the edges in the path
 void path_combinations(path* p, pair_edge* comb, int r)
 {  
   calc_path_combinations(p, comb, 0,0, 2,-1,-1);
@@ -70,7 +71,6 @@ void path_combinations(path* p, pair_edge* comb, int r)
 }
 int edges_connectedp(edge* e1, edge* e2)
  {  
-  //printf("e1 %d %d, e2 %d %d\n", e1->v1.id,e1->v2.id,e2->v1.id,e2->v2.id);
   if (e1->v1.id == e2->v1.id || e1->v1.id == e2->v2.id ||
       e1->v2.id == e2->v1.id || e1->v2.id == e2->v2.id)
     {
@@ -124,7 +124,6 @@ pair_edge* create_neighborhood(graph* g, int* avail, int avail_len,
 	    }
 	  if (avail1 > -1 && avail2>-1)
 	    {
-	      printf("[%d] %d %d\n",i, avail1,avail2);
 	      neighind[i][0] = avail1;
 	      neighind[i][1] = avail2;
 	      neighind[i][2] = i;	      
@@ -177,28 +176,25 @@ const int in_path(edge e,path * p)
 
 pair_edge * neighb_str(graph *g, path * p,int* size)
 {
-  int available_len = g->m - p->length+1;
-  //edge * available = (edge*) malloc(available_len * sizeof(edge));
-  int available[available_len];
+  int nedges = g->m;
+  int available[nedges];
   // Get all the available edges.
   int j=0;
   for (int i=0; i<g->m;i++)
     {
-       if (in_path(g->edges[i],p) == -1)
+      if (in_path(g->edges[i],p) == -1)
   	{
 	  available[j] = i;
   	  j++;
   	}
     }
-
+  int available_len = j;
   // Get all the combinations of edges in the path
   int path_ncomb=no_comb(p->length-2);
   pair_edge* path_comb = new_pair_edge(path_ncomb);
   path_combinations(p, path_comb, 2);
-
   // Define the neighborhood structure with help of the two arrays of pair edge
-  pair_edge* neighb = create_neighborhood(g,available,available_len,path_comb,path_ncomb,size);  
-
+  pair_edge* neighb = create_neighborhood(g,available,available_len,path_comb,path_ncomb,size);
   free_pair_edge(path_comb,path_ncomb);
   return neighb;
 }
@@ -229,11 +225,8 @@ path* ls_best_improv (graph* g, path* p)
   int min_ineigh = -1;
   int basecost = cbtsp_o(g, p);
   int neighb_len = 0;
-  
   pair_edge* neighb = neighb_str(g, p, &neighb_len);
   printf("neighborhood of size: %d\n",neighb_len);
-  path_print(p);
-  printf("basecost path p %d", basecost);
   for (int i=0;i<neighb_len;i++)
     {
       if (i%2 == 0)
@@ -260,7 +253,6 @@ path* ls_best_improv (graph* g, path* p)
       // Check if the cost of the replaced solution is smaller than the
       // given path cost, if it is then store it`s index.      
       int rcost = cbtsp_o(g, r);
-      printf("cost: %d\n", rcost);
       if (rcost < basecost)
 	{
 	  min_ineigh = j;
@@ -268,7 +260,7 @@ path* ls_best_improv (graph* g, path* p)
 	  assign_path(sol,r);
 	}
       
-      path_print(r);
+     
       // Refresh r to be equal to p for the next iteration
       assign_path(r,p); 
       j = j+2;
@@ -280,12 +272,8 @@ path* ls_best_improv (graph* g, path* p)
   free_pair_edge(neighb, neighb_len);
   if (min_ineigh == -1)
     return p;
-  else
-    {
-      printf("solution best improv with cost %d:\n", basecost);
-      path_print(sol);
-      return sol;      
-    }
+  else    
+    return sol;
 }
 
 
