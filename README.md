@@ -35,12 +35,12 @@ to the given [cost] is closest to zero.
 ###### structs: 
 - pair_edge
 ###### functions
- - pair_edge * neighb_str(graph *g, path * p,int * size);
- Returns a array of pair_edge where the even k-th pair represent the edge in the path and the odds k+1-th pair the edge not in the path that would be substituted by. It takes as input the graph, a solution in form of a path and a pointer to an integer which will contain the size of the neighborhood
+ - pair_edge * neighb_str(graph *g, path * p,int * size): Returns a array of pair_edge where the even k-th pair represent the edge in the path and the odds k+1-th pair the edge not in the path that would be substituted by. It takes as input the graph, a solution in form of a path and a pointer to an integer which will contain the size of the neighborhood
  - pair_edge * new_pair_edge(int n): Allocate a new pair edge array of size n
  - void free_pair_edge(pair_edge* p, int n): Free a pair edge array of size n
- - path * replace_edge (path* g, pair_edge * edges, int len): Replace len edges in the path, where edges is an array of pair_edge where the e1 edge are subsituted by the e2.
-
+ - path * replace_edges (path* g, pair_edge * edges, int len): Replace len edges in the path, where edges is an array of pair_edge where the e1 edge are subsituted by the e2.
+const int in_path(edge e,path * p): Check if an edge is in the given path, if it is returns the index in the path if not -1
+void neighb_print(pair_edge* neighb, int neighb_len): Print the given neighborhood structure, showing the edges in the path -> edges outside the path which could be used.
 
 ####  Usage
 ##### Compilation

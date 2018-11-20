@@ -38,7 +38,19 @@ int get_index(int i,int length)
   else
     return length - 3 + get_index(i-1,length-1); 
 }
-
+void neighb_print(pair_edge* neighb, int neighb_len)
+{
+  for (int i=0;i<neighb_len;i++)
+    {
+      if (i%2 == 0)
+	printf("\n");
+      else
+	printf("-> ");
+      printf("(%d %d) , (%d %d) ",neighb[i].e1->v1.id,neighb[i].e1->v2.id,
+	     neighb[i].e2->v1.id,neighb[i].e2->v2.id);
+    }
+  printf("\n");
+}
 void calc_path_combinations(path* p, pair_edge*  result, int start, int index,
 		       int r, int v1, int v2)
 {
@@ -90,8 +102,10 @@ pair_edge* create_neighborhood(graph* g, int* avail, int avail_len,
 {
   // Create a neighborhood array which will represent every pair of edge that has
   // a matching pair of edge from the available edge_comb array which can be switched
-  int neighind[pncomb][3];
-  for(int i=0;i<pncomb;i++)
+  int **neighind = (int **) malloc (pncomb*sizeof(int*));
+  for (int i=0; i<pncomb; i++)
+    neighind[i] = (int*) malloc(3*sizeof(int));
+  for (int i=0; i<pncomb; i++)
     {
       neighind[i][0] = -1;
       neighind[i][1] = -1;
@@ -159,6 +173,9 @@ pair_edge* create_neighborhood(graph* g, int* avail, int avail_len,
       i++;
       j = j + 2;
     }
+  for (int i=0; i<pncomb; i++)
+    free(neighind[i]);
+  free(neighind);
   return neighb;
 }
 const int in_path(edge e,path * p)
@@ -227,16 +244,7 @@ path* ls_best_improv (graph* g, path* p)
   int neighb_len = 0;
   pair_edge* neighb = neighb_str(g, p, &neighb_len);
   printf("neighborhood of size: %d\n",neighb_len);
-  for (int i=0;i<neighb_len;i++)
-    {
-      if (i%2 == 0)
-	printf("\n");
-      else
-	printf("-> ");
-      printf("(%d %d) , (%d %d) ",neighb[i].e1->v1.id,neighb[i].e1->v2.id,
-	     neighb[i].e2->v1.id,neighb[i].e2->v2.id);
-    }
-  printf("\n");
+
   // Create an auxiliary path that will be used to hold all the paths
   // created by replacing edges
   path* r = copy_path(p);
@@ -249,7 +257,6 @@ path* ls_best_improv (graph* g, path* p)
       edges[1].e1 = neighb[j].e2;
       edges[1].e2 = neighb[j+1].e2;
       replace_edges (r, p, edges, 2);
-      printf("feasible: %d\n",feasible(r));
       // Check if the cost of the replaced solution is smaller than the
       // given path cost, if it is then store it`s index.      
       int rcost = cbtsp_o(g, r);
