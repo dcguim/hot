@@ -316,8 +316,8 @@ int main (int argc, char** argv)
   char * alg = argv[2];
 
   g = graph_from_file(file);
-  cost_t cost;
-  path * p;
+  cost_t cost = 0;
+  path * p = NULL;
 
   // Deterministic construction heuristic
   if (strcmp("det_ch", alg) == 0)
@@ -370,7 +370,7 @@ int main (int argc, char** argv)
 	      printf("NOT IMPLEMENTED\n");
 	      return 3;
 	    }
-	  else if (strcmp("random" , step))
+	  else if (strcmp("random" , step) == 0)
 	    {
 	      printf("NOT IMPLEMENTED\n");
 	      return 3;
