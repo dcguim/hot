@@ -267,6 +267,12 @@ graph * graph_from_file (char * file)
   return g;
 }
 
+cost_t distance(graph * g, int a, int b)
+{
+  edge * e = find_edge (g, a, b);
+  return e == NULL ? g->bigM : e->c;
+}
+
 cost_t cbtsp_o(graph * g, path * p)
 {
   cost_t o = 0;
@@ -350,7 +356,7 @@ int main (int argc, char** argv)
     {
       if (argc < 6 || atoi(argv[3]) == 0)
       {
-	printf("USAGE: %s START_VERTEX_ID NEIGHBORHOOD STEP_FN\n", alg);
+	printf("USAGE: %s START_VERTEX_ID NEIGHBORHOOD STEP_FN [RUNTIME_SECONDS]\n", alg);
 	return 2;
       }
 
@@ -378,8 +384,33 @@ int main (int argc, char** argv)
 	}
       else if (strcmp("3opt", nb) == 0)
 	{
-	  printf("NOT IMPLEMENTED\n");
-	  return 3;
+	  n_3opt_it it = n_3opt_new_it();
+	  neighborhood_fn n_fn = n_3opt_next;
+	  double runtime = 10;
+
+	  if (argc > 6) {
+	    if (atoi(argv[6]) == 0)
+	      {
+		printf("USAGE: %s START_VERTEX_ID NEIGHBORHOOD STEP_FN [RUNTIME_SECONDS]\n", alg);
+		return 2;
+	      }
+	    else
+	      {
+		runtime = atoi(argv[6]);
+	      }
+	  }
+
+	  if (strcmp("first_improv", step) == 0)
+	    {
+	      step_fn s_fn = first_improv;
+	      p = local_search(g, init_p, s_fn, n_fn, &it, runtime);
+	      cost = cbtsp_o(g, p);
+	    }
+	  else
+	    {
+	      printf("NOT IMPLEMENTED\n");
+	      return 3;
+	    }
 	}
       else if (strcmp("2.5opt", nb) == 0)
 	{
