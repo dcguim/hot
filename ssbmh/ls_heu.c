@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
+#include <time.h>
+#include <assert.h>
 
 pair_edge * new_pair_edge(int n)
 {
@@ -283,6 +286,162 @@ path* ls_best_improv (graph* g, path* p)
     return sol;
 }
 
+n_3opt_it n_3opt_new_it ()
+{
+  n_3opt_it it = { .i = 0, .j = 2, .k = 4 };
+  return it;
+}
+// Reverse items in p from i to j inclusive
+void path_reverse (path * p, int i, int j)
+{
+  int tmp;
+  if (j < i)
+    {
+      path_reverse(p, j + 1, i - 1);
+      return;
+    }
+  while (i < j)
+  {
+    tmp = p->path[i];
+    p->path[i] = p->path[j];
+    p->path[j] = tmp;
+    i += 1;
+    j -= 1;
+  }
+}
 
+// Move items in p in range from i to j inclusive to position t
+void path_move (path * p, int i, int j, int t)
+{
+  assert(i < j);
+  assert(t < i);
+  int l = j - i + 1;
+  int m = i - t + 1;
+  int * tmp = (int*)malloc(m * sizeof(int));
+  memcpy(tmp, p->path + t, m * sizeof(int));
+  memcpy(p->path + t, p->path + i, l * sizeof(int));
+  memcpy(p->path + t + l, tmp, m * sizeof(int));
+  free(tmp);
+}
 
+path * n_3opt_next (graph * g, path * p, void* n_it)
+{
+  n_3opt_it * it = (n_3opt_it*)n_it;
+  path * n = copy_path(p);
+  if (it->i < p->length - 5)
+    {
+      if (it->j < p->length - 3)
+	{
+	  // don't choose edge to vertex 0 as third when the first edge starts from 0
+	  if (it->k < p->length - 1 - (it->i == 0))
+	    {
+	      int v1a = p->path[it->i], v1b = p->path[it->i + 1];
+	      int v2a = p->path[it->j], v2b = p->path[it->j + 1];
+	      int v3a = p->path[it->k], v3b = p->path[it->k + 1];
 
+	      // cost of edges to remove
+	      cost_t d0 = distance(g, v1a, v1b) + distance(g, v2a, v2b) + distance(g, v3a, v3b);
+
+	      // costs of combinations with all new edges
+	      cost_t d_1a2b = distance(g, v1a, v2b);
+	      cost_t d_2a3b = distance(g, v2a, v3b);
+	      cost_t d_3a1b = distance(g, v1b, v3a);
+	      cost_t d1 = distance(g, v1a, v2a) + d_3a1b + distance(g, v2b, v3b);
+	      cost_t d2 = d_1a2b + distance(g, v3a, v2a) + distance(g, v1b, v3b);
+	      cost_t d3 = distance(g, v1a, v3a) + distance(g, v2b, v1b) + d_2a3b;
+	      cost_t d4 = d_1a2b + d_3a1b + d_2a3b;
+
+	      cost_t f0 = llabs(d0);
+	      if (llabs(d1) < f0)
+		{
+		  path_reverse(n, it->i + 1, it->j);
+		  path_reverse(n, it->j + 1, it->k);
+		}
+	      else if (llabs(d2) < f0)
+		{
+		  path_reverse(n, it->j + 1, it->k);
+		  path_reverse(n, it->k + 1, it->i);
+		}
+	      else if (llabs(d3) < f0)
+		{
+		  path_reverse(n, it->k + 1, it->i);
+		  // reverse it->i + 1 to it->j but fix indices
+		  path_reverse(n, it->i + it->k - it->j, it->k);
+		}
+	      else // if (llabs(d4) < f0)
+		{
+		  path_move(n, it->j + 1, it->k, it->i + 1);
+		}
+
+	      it->k += 1;
+	      return n;
+	    }
+	  else
+	    {
+	      it->j += 1;
+	      it->k = it->j + 2;
+	      return n_3opt_next(g, p, it);
+	    }
+	}
+      else
+	{
+	  it->i += 1;
+	  it->j = it->i + 2;
+	  return n_3opt_next(g, p, it);
+	}
+    }
+  else
+   {
+     return NULL;
+   }
+}
+
+path * first_improv (graph * g, path * p, neighborhood_fn n_next, void* it)
+{
+  cost_t cost = cbtsp_o(g, p);
+  cost_t candidate_cost = 0;
+  path * candidate = NULL;
+  for (;;)
+    {
+      candidate = n_next(g, p, it);
+      if (candidate == NULL)
+	{
+	  return NULL;
+	}
+      else
+	{
+	  candidate_cost = cbtsp_o(g, candidate);
+	  if (candidate_cost < cost)
+	    {
+	       return candidate;
+	    }
+	}
+    }
+}
+
+path * local_search(graph * g, path * p, step_fn step, neighborhood_fn n_next, void* it, double runtime_seconds)
+{
+  time_t beginning = time(NULL);
+  path * p_candidate = NULL;
+  cost_t p_o = cbtsp_o(g, p);
+  cost_t p_candidate_o = 0;
+  while (difftime(time(NULL), beginning) < runtime_seconds)
+    {
+      p_candidate = step(g, p, n_next, it);
+      if (p_candidate == NULL)
+	{
+	  return p;
+	}
+      else
+	{
+	  p_candidate_o = cbtsp_o(g, p_candidate);
+	  if (p_candidate_o < p_o)
+	    {
+	      free_path(p);
+	      p = p_candidate;
+	      p_o = p_candidate_o;
+	    }
+	}
+    }
+  return p;
+}

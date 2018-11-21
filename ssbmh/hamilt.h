@@ -52,6 +52,8 @@ int cmp_cost (const void * a, const void * b);
 
 cost_t cbtsp_o(graph * g, path * p);
 
+cost_t distance(graph * g, int a, int b);
+
 double rand_double();
 
 edge * find_edge (graph * g, int a, int b);
