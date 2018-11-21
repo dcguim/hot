@@ -314,6 +314,15 @@ path * grasp_nearest_neigbor (double r)
   return ch_nearest_neighbor_randomized(g, start_vertex_id, r);
 }
 
+path * grasp_ls (graph * g, path * p)
+{
+  step_fn s_fn = first_improv;
+  n_3opt_it it = n_3opt_new_it();
+  neighborhood_fn n_fn = n_3opt_next;
+  double runtime = 60;
+  return local_search(g, p, s_fn, n_fn, &it, runtime);
+}
+
 int main (int argc, char** argv)
 {
   rand_seed();
@@ -438,7 +447,7 @@ int main (int argc, char** argv)
       }
 
       p = h_grasp(g, strtod(argv[3], &end), grasp_nearest_neigbor,
-	  ls_best_improv, atoi(argv[4]));
+	  grasp_ls, atoi(argv[4]));
       cost = cbtsp_o(g, p);
     }
   else
