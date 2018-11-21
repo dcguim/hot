@@ -316,7 +316,7 @@ void path_move (path * p, int i, int j, int t)
   assert(i < j);
   assert(t < i);
   int l = j - i + 1;
-  int m = i - t + 1;
+  int m = i - t;
   int * tmp = (int*)malloc(m * sizeof(int));
   memcpy(tmp, p->path + t, m * sizeof(int));
   memcpy(p->path + t, p->path + i, l * sizeof(int));
@@ -364,9 +364,9 @@ path * n_3opt_next (graph * g, path * p, void* n_it)
 		}
 	      else if (llabs(d3) < f0)
 		{
+		  path_reverse(n, it->i + 1, it->j);
+		  // this needs to go second because afterwards indices in it are invalid
 		  path_reverse(n, it->k + 1, it->i);
-		  // reverse it->i + 1 to it->j but fix indices
-		  path_reverse(n, it->i + it->k - it->j, it->k);
 		}
 	      else // if (llabs(d4) < f0)
 		{
