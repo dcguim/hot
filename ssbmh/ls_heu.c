@@ -404,8 +404,8 @@ path * n_3opt_next (graph * g, path * p, void* n_it)
 path * n_3opt_rand (graph * g, path * p, void* _it)
 {
   int i = floor((p->length - 5) * rand_double());
-  int j = floor(i + (p->length - 3 - i) * rand_double());
-  int k = floor(j + (p->length - 1 - (i == 0) - j) * rand_double());
+  int j = floor(i + 2 + (p->length - 3 - i - 2) * rand_double());
+  int k = floor(j + 2 + (p->length - 1 - (i == 0) - j - 2) * rand_double());
   n_3opt_it it = { .i = i, .j = j, .k = k };
   return n_3opt_next(g, p, &it);
 }
