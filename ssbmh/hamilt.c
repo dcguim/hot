@@ -10,6 +10,7 @@
 #include "const_heu.h"
 #include "ls_heu.h"
 #include "grasp.h"
+#include "vnd.h"
 
 void rand_seed()
 {
@@ -463,10 +464,24 @@ int main (int argc, char** argv)
 	  grasp_ls, atoi(argv[4]));
       cost = cbtsp_o(g, p);
     }
+  // VND
+  else if (strcmp("vnd", alg) == 0)
+    {
+      if (argc < 4 || atoi(argv[3]) == 0)
+      {
+	printf("USAGE: %s START_VERTEX_ID\n", alg);
+	return 2;
+      }
+
+      path * init_p = ch_nearest_neighbor(g, atoi(argv[3]));
+      p = h_vnd(g, init_p);
+      cost = cbtsp_o(g, p);
+      free(init_p);
+    }
   else
     {
       printf("Invalid algorithm name \"%s\"\n", alg);
-      printf("Available algorithms: det_ch, rand_ch, ls, grasp\n");
+      printf("Available algorithms: det_ch, rand_ch, ls, grasp, vnd\n");
       return 1;
     }
 
