@@ -317,10 +317,10 @@ path * grasp_nearest_neigbor (double r)
 path * grasp_ls (graph * g, path * p)
 {
   step_fn s_fn = first_improv;
-  n_3opt_it it = n_3opt_new_it();
   neighborhood_fn n_fn = n_3opt_next;
+  new_it_fn it_fn = n_3opt_new_it;
   double runtime = 60;
-  return local_search(g, p, s_fn, n_fn, &it, runtime);
+  return local_search(g, p, s_fn, n_fn, it_fn, runtime);
 }
 
 int main (int argc, char** argv)
@@ -393,7 +393,7 @@ int main (int argc, char** argv)
 	}
       else if (strcmp("3opt", nb) == 0)
 	{
-	  n_3opt_it it = n_3opt_new_it();
+	  new_it_fn it_fn = n_3opt_new_it;
 	  neighborhood_fn n_fn = n_3opt_next;
 	  double runtime = 10;
 
@@ -412,13 +412,26 @@ int main (int argc, char** argv)
 	  if (strcmp("first_improv", step) == 0)
 	    {
 	      step_fn s_fn = first_improv;
-	      p = local_search(g, init_p, s_fn, n_fn, &it, runtime);
+	      p = local_search(g, init_p, s_fn, n_fn, it_fn, runtime);
+	      cost = cbtsp_o(g, p);
+	    }
+	  else if (strcmp("best_improv", step) == 0)
+	    {
+	      step_fn s_fn = best_improv;
+	      p = local_search(g, init_p, s_fn, n_fn, it_fn, runtime);
+	      cost = cbtsp_o(g, p);
+	    }
+	  else if (strcmp("rand", step) == 0)
+	    {
+	      step_fn s_fn = single_step;
+	      n_fn = n_3opt_rand;
+	      p = local_search(g, init_p, s_fn, n_fn, it_fn, runtime);
 	      cost = cbtsp_o(g, p);
 	    }
 	  else
 	    {
-	      printf("NOT IMPLEMENTED\n");
-	      return 3;
+	      printf("Available step functions: first_improv, best_improv, rand\n");
+	      return 2;
 	    }
 	}
       else if (strcmp("2.5opt", nb) == 0)
@@ -428,7 +441,7 @@ int main (int argc, char** argv)
 	}
       else
 	{
-	  printf("Available neighborhoods: 2opt\n");
+	  printf("Available neighborhoods: 2opt, 3opt\n");
 	  return 2;
 	}
       if (init_p != p)
