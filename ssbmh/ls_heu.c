@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <time.h>
+#include <math.h>
 #include <assert.h>
 
 pair_edge * new_pair_edge(int n)
@@ -286,11 +287,15 @@ path* ls_best_improv (graph* g, path* p)
     return sol;
 }
 
-n_3opt_it n_3opt_new_it ()
+n_3opt_it * n_3opt_new_it ()
 {
-  n_3opt_it it = { .i = 0, .j = 2, .k = 4 };
+  n_3opt_it * it = (n_3opt_it*)malloc(sizeof(n_3opt_it));
+  it->i = 0;
+  it->j = 2;
+  it->k = 4;
   return it;
 }
+
 // Reverse items in p from i to j inclusive
 void path_reverse (path * p, int i, int j)
 {
@@ -396,6 +401,15 @@ path * n_3opt_next (graph * g, path * p, void* n_it)
    }
 }
 
+path * n_3opt_rand (graph * g, path * p, void* _it)
+{
+  int i = floor((p->length - 5) * rand_double());
+  int j = floor(i + (p->length - 3 - i) * rand_double());
+  int k = floor(j + (p->length - 1 - (i == 0) - j) * rand_double());
+  n_3opt_it it = { .i = i, .j = j, .k = k };
+  return n_3opt_next(g, p, &it);
+}
+
 path * first_improv (graph * g, path * p, neighborhood_fn n_next, void* it)
 {
   cost_t cost = cbtsp_o(g, p);
@@ -419,29 +433,78 @@ path * first_improv (graph * g, path * p, neighborhood_fn n_next, void* it)
     }
 }
 
-path * local_search(graph * g, path * p, step_fn step, neighborhood_fn n_next, void* it, double runtime_seconds)
+path * best_improv (graph * g, path * p, neighborhood_fn n_next, void* it)
 {
-  time_t beginning = time(NULL);
-  path * p_candidate = NULL;
-  cost_t p_o = cbtsp_o(g, p);
-  cost_t p_candidate_o = 0;
-  while (difftime(time(NULL), beginning) < runtime_seconds)
+  cost_t candidate_cost = 0;
+  path * candidate = NULL;
+  cost_t best_candidate_cost = cbtsp_o(g, p);
+  path * best_candidate = p;
+  for (;;)
     {
-      p_candidate = step(g, p, n_next, it);
+      candidate = n_next(g, p, it);
+      if (candidate == NULL)
+	{
+	  if (best_candidate == p)
+	    {
+	      return NULL;
+	    }
+	  else
+	    {
+	      return best_candidate;
+	    }
+	}
+      else
+	{
+	  candidate_cost = cbtsp_o(g, candidate);
+	  if (candidate_cost < best_candidate_cost)
+	    {
+	      if (best_candidate != p)
+		{
+		  free_path(best_candidate);
+		}
+	      best_candidate = candidate;
+	      best_candidate_cost = candidate_cost;
+	    }
+	}
+    }
+}
+
+path * single_step (graph * g, path * p, neighborhood_fn n_next, void* it)
+{
+  return n_next(g, p, it);
+}
+
+path * local_search(graph * g, path * p, step_fn step, neighborhood_fn n_next, new_it_fn new_it, double runtime_seconds)
+{
+  clock_t beginning = clock();
+  path * p_candidate = NULL;
+  cost_t p_candidate_o = 0;
+  path * best_candidate = p;
+  cost_t best_candidate_cost = cbtsp_o(g, p);
+  void * it = new_it();
+  while ((clock() - beginning) / CLOCKS_PER_SEC < runtime_seconds)
+    {
+      p_candidate = step(g, best_candidate, n_next, it);
       if (p_candidate == NULL)
 	{
-	  return p;
+	  return best_candidate;
 	}
       else
 	{
 	  p_candidate_o = cbtsp_o(g, p_candidate);
-	  if (p_candidate_o < p_o)
+	  if (p_candidate_o < best_candidate_cost)
 	    {
-	      free_path(p);
-	      p = p_candidate;
-	      p_o = p_candidate_o;
+	      if (best_candidate != p)
+		{
+		  free_path(best_candidate);
+		}
+	      best_candidate = p_candidate;
+	      best_candidate_cost = p_candidate_o;
+	      free(it);
+	      it = new_it();
 	    }
 	}
     }
-  return p;
+  free(it);
+  return best_candidate;
 }
