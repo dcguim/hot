@@ -391,7 +391,10 @@ int main (int argc, char** argv)
 	  printf("Available neighborhoods: 2opt\n");
 	  return 2;
 	}
-      free_path(init_p);
+      if (init_p != p)
+	{
+	  free(init_p);
+	}
     }
   // GRASP
   else if (strcmp("grasp", alg) == 0)
