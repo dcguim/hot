@@ -36,6 +36,7 @@ typedef struct path
 {
   int * path;
   int length;
+  cost_t distance;
 } path;
 
 path * new_path (int length);

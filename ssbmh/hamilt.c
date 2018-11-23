@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include <limits.h>
+#include <assert.h>
 #include "pcg_basic.h"
 
 #include "hamilt.h"
@@ -11,6 +13,8 @@
 #include "ls_heu.h"
 #include "grasp.h"
 #include "vnd.h"
+
+#define INC_EVAL 0
 
 void rand_seed()
 {
@@ -48,6 +52,7 @@ path * new_path (int length)
 {
   path * p = (path*) malloc(sizeof(path));
   p->length = length;
+  p->distance = LLONG_MAX;
   p->path = (int*) malloc(length * sizeof(int));
   return p;
 }
@@ -56,6 +61,7 @@ path * copy_path (path* p)
 {
   path * c = new_path(p->length);
   c->length = p->length;
+  c->distance = p->distance;
   for (int i = 0; i < c->length; i++)
     {
       c->path[i] = p->path[i];
@@ -276,6 +282,11 @@ cost_t distance(graph * g, int a, int b)
 
 cost_t cbtsp_o(graph * g, path * p)
 {
+  if (INC_EVAL)
+    {
+      return llabs(p->distance);
+    }
+
   cost_t o = 0;
   cost_t l = p->length - 1;
   edge * e;
@@ -372,6 +383,7 @@ int main (int argc, char** argv)
       }
 
       path * init_p = ch_nearest_neighbor(g, atoi(argv[3]));
+      assert(llabs(init_p->distance) == cbtsp_o(g, init_p));
 
       char * nb = argv[4];
       char * step = argv[5];
@@ -528,6 +540,7 @@ int main (int argc, char** argv)
 
   printf("%lld ", cost);
   path_print(p);
+  assert(llabs(p->distance) == cost);
   free_path(p);
   return 0;
 }
