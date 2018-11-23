@@ -101,7 +101,7 @@ path * ch_nearest_neighbor_randomized (graph * g, int start, double r)
 
   int path_i = 0;
   int v = start;
-  int c = 0;
+  cost_t c = 0;
   path * p = new_path(g->n + 1);
   p->path[path_i++] = v;
   do
@@ -136,6 +136,7 @@ path * ch_nearest_neighbor_randomized (graph * g, int start, double r)
       free(edges);
     }
   while (available_len > 0);
+  p->distance = c + distance(g, p->path[path_i - 1], start);
   p->path[path_i++] = start;
   free(available);
   return p;

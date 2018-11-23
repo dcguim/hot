@@ -366,6 +366,7 @@ path * n_3opt_next (graph * g, path * p, void* n_it)
 		    {
 		      path_reverse(n, it->i + 1, it->j);
 		      path_reverse(n, it->j + 1, it->k);
+		      n->distance += d1 - d0;
 		      it->k += 1;
 		      return n;
 		    }
@@ -376,6 +377,7 @@ path * n_3opt_next (graph * g, path * p, void* n_it)
 		    {
 		      path_reverse(n, it->j + 1, it->k);
 		      path_reverse(n, it->k + 1, it->i);
+		      n->distance += d2 - d0;
 		      it->k += 1;
 		      return n;
 		    }
@@ -387,6 +389,7 @@ path * n_3opt_next (graph * g, path * p, void* n_it)
 		      path_reverse(n, it->i + 1, it->j);
 		      // this needs to go second because afterwards indices in it are invalid
 		      path_reverse(n, it->k + 1, it->i);
+		      n->distance += d3 - d0;
 		      it->k += 1;
 		      return n;
 		    }
@@ -395,6 +398,7 @@ path * n_3opt_next (graph * g, path * p, void* n_it)
 		  if (llabs(d4) < f0)
 		    {
 		      path_move(n, it->j + 1, it->k, it->i + 1);
+		      n->distance += d4 - d0;
 		      it->k += 1;
 		      return n;
 		    }
@@ -473,6 +477,12 @@ path * n_25opt_next (graph * g, path * p, void* n_it)
 		  it->j = it->i + 3;
 		  continue;
 		}
+
+	      int a = n->path[it->j], b = n->path[it->j + 1];
+	      cost_t c = distance(g, v1a, v2b)
+                       + distance(g, a, v1b)
+                       + distance(g, b, v1b);
+	      n->distance += c - 2 * g->bigM - distance(g, a, b);
 
 	      if (it->j < it->i)
 		{
