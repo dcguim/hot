@@ -115,7 +115,8 @@ path * ch_nearest_neighbor_randomized (graph * g, int start, double r)
         {
           // Choose any available vertex
           c += g->bigM;
-          p->path[path_i++] = available[--available_len];
+          v = available[--available_len];
+          p->path[path_i++] = v;
         }
       else
         {
