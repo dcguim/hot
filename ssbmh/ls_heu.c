@@ -649,7 +649,9 @@ path * local_search(graph * g, path * p, step_fn step, neighborhood_fn n_next, n
   path * best_candidate = p;
   cost_t best_candidate_cost = cbtsp_o(g, p);
   void * it = new_it();
-  while ((clock() - beginning) / CLOCKS_PER_SEC < runtime_seconds)
+  int max_fails = ceil(log(p->length));
+  int fails = 0;
+  while ((clock() - beginning) / CLOCKS_PER_SEC < runtime_seconds && fails < max_fails)
     {
       p_candidate = step(g, best_candidate, n_next, it);
       if (p_candidate == NULL)
@@ -667,9 +669,13 @@ path * local_search(graph * g, path * p, step_fn step, neighborhood_fn n_next, n
 		}
 	      best_candidate = p_candidate;
 	      best_candidate_cost = p_candidate_o;
-	      free(it);
-	      it = new_it();
 	    }
+	  else
+	    {
+	      fails += 1;
+	    }
+	  free(it);
+	  it = new_it();
 	}
     }
   free(it);
