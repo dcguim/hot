@@ -6,12 +6,12 @@
 path * h_grasp (graph * g, double r, randomized_construction_f construct,
     local_search_f local_search, double runtime_seconds)
 {
-  time_t beginning = time(NULL);
+  time_t beginning = clock();
   path * p = local_search(g, construct(r));
   path * p_candidate;
   cost_t p_o = cbtsp_o(g, p);
   cost_t p_candidate_o;
-  while (difftime(time(NULL), beginning) < runtime_seconds)
+  while ((clock() - beginning) / CLOCKS_PER_SEC < runtime_seconds)
     {
       p_candidate = local_search(g, construct(r));
       p_candidate_o = cbtsp_o(g, p_candidate);
