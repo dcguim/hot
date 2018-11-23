@@ -296,6 +296,15 @@ n_3opt_it * n_3opt_new_it ()
   return it;
 }
 
+n_25opt_it * n_25opt_new_it ()
+{
+  n_25opt_it * it = (n_25opt_it*)malloc(sizeof(n_25opt_it));
+  it->i = 0;
+  it->j = 0;
+  it->s = 0;
+  return it;
+}
+
 // Reverse items in p from i to j inclusive
 void path_reverse (path * p, int i, int j)
 {
@@ -420,6 +429,78 @@ path * n_3opt_rand (graph * g, path * p, void* _it)
   int k = floor(j + 2 + (p->length - 1 - (i == 0) - j - 2) * rand_double());
   n_3opt_it it = { .i = i, .j = j, .k = k };
   return n_3opt_next(g, p, &it);
+}
+
+path * n_25opt_next (graph * g, path * p, void* n_it)
+{
+  n_25opt_it * it = (n_25opt_it*)n_it;
+  path * n = copy_path(p);
+
+  for (;;)
+    {
+      if (it->i < p->length - 4)
+	{
+	  int v1a = p->path[it->i], v1b = p->path[it->i + 1];
+	  int v2a = v1b, v2b = p->path[it->i + 2];
+	  if (it->s == 0)
+	    {
+	      // look for pair of M edges
+	      cost_t c2 = distance(g, v2a, v2b);
+	      printd("c2=%lld\n", c2);
+	      if (c2 != g->bigM)
+		{
+		  it->i += 2;
+		  it->j = 0;
+		  continue;
+		}
+
+	      cost_t c1 = distance(g, v1a, v1b);
+	      printd("c1=%lld\n", c2);
+	      if (c1 != g->bigM)
+		{
+		  it->i += 2;
+		  it->j = 0;
+		  continue;
+		}
+	      it->s = 1;
+	    }
+
+	  if (it->j < p->length - 2 - (it->i == 0))
+	    {
+	      // skip edges next to the other two edge choices
+	      if (it->j > it->i - 2 && it->j < (it->i + 3) % (p->length - 1))
+		{
+		  it->j = it->i + 3;
+		  continue;
+		}
+
+	      if (it->j < it->i)
+		{
+		  path_reverse(n, 0, n->length);
+		  path_move(n, n->length - it->i, n->length - (it->j + 1),
+		      n->length - (it->i + 1));
+		  path_reverse(n, 0, n->length);
+		}
+	      else
+		{
+		  path_move(n, it->i + 2, it->j, it->i + 1);
+		}
+
+	      it->j += 1;
+	      return n;
+	    }
+	  else
+	    {
+	      it->i += 2;
+	      it->j = 0;
+	      it->s = 0;
+	    }
+	}
+      else
+	{
+	  return NULL;
+	}
+    }
 }
 
 path * first_improv (graph * g, path * p, neighborhood_fn n_next, void* it)
