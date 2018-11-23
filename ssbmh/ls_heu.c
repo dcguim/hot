@@ -572,6 +572,70 @@ path * best_improv (graph * g, path * p, neighborhood_fn n_next, void* it)
     }
 }
 
+path * rand_step (graph * g, path * p, neighborhood_fn n_next, void* it)
+{
+  int paths_i = 0;
+  int paths_len = p->length;
+  path ** paths = (path**)malloc(paths_len * sizeof(path*));
+  path * candidate = NULL;
+  cost_t cost = cbtsp_o(g, p);
+  for (;;)
+    {
+      candidate = n_next (g, p, it);
+      if (candidate == NULL)
+      {
+	if (paths_i == 0)
+	  {
+	    return NULL;
+	  }
+	int * indices = (int*)malloc(paths_i * sizeof(int));
+	for (int i = 0; i < paths_i; ++i)
+	  {
+	    indices[i] = i;
+	  }
+	int tmp_i, shuffle_i;
+	for (int i = 0; i < paths_i; ++i)
+	  {
+	    shuffle_i = floor(paths_i * rand_double());
+	    tmp_i = indices[i];
+	    indices[i] = indices[shuffle_i];
+	    indices[shuffle_i] = tmp_i;
+	  }
+
+	path * n = NULL;
+	int rand_index = -1;
+	for (int i = 0; i < paths_i; ++i)
+	  {
+	    if (cbtsp_o(g, paths[indices[i]]) < cost)
+	      {
+		rand_index = indices[i];
+		n = paths[rand_index];
+		break;
+	      }
+	  }
+	for (int i = 0; i < paths_i; ++i)
+	  {
+	    if (i != rand_index)
+	      {
+		free(paths[i]);
+	      }
+	  }
+	free(paths);
+	return n;
+      }
+      if (paths_i == paths_len)
+	{
+	  int new_paths_len = paths_len * 2;
+	  path ** new_paths = (path**)malloc(new_paths_len * sizeof(path*));
+	  memcpy(new_paths, paths, paths_len * sizeof(path*));
+	  free(paths);
+	  paths = new_paths;
+	  paths_len = new_paths_len;
+	}
+      paths[paths_i++] = candidate;
+    }
+}
+
 path * single_step (graph * g, path * p, neighborhood_fn n_next, void* it)
 {
   return n_next(g, p, it);

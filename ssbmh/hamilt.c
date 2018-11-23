@@ -480,12 +480,9 @@ int main (int argc, char** argv)
 	    }
 	  else if (strcmp("rand", step) == 0)
 	    {
-	      printf("NOT IMPLEMENTED\n");
-	      return 3;
-	      //step_fn s_fn = single_step;
-	      //n_fn = n_3opt_rand;
-	      //p = local_search(g, init_p, s_fn, n_fn, it_fn, runtime);
-	      //cost = cbtsp_o(g, p);
+	      step_fn s_fn = rand_step;
+	      p = local_search(g, init_p, s_fn, n_fn, it_fn, runtime);
+	      cost = cbtsp_o(g, p);
 	    }
 	  else
 	    {
