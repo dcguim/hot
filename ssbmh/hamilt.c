@@ -319,6 +319,7 @@ int feasible(path * p)
 }
 
 graph * g;
+double runtime;
 
 path * grasp_nearest_neigbor (double r)
 {
@@ -331,8 +332,7 @@ path * grasp_ls (graph * g, path * p)
   step_fn s_fn = first_improv;
   neighborhood_fn n_fn = n_3opt_next;
   new_it_fn it_fn = n_3opt_new_it;
-  double runtime = 60;
-  return local_search(g, p, s_fn, n_fn, it_fn, runtime);
+  return local_search(g, p, s_fn, n_fn, it_fn, runtime / 10);
 }
 
 int main (int argc, char** argv)
@@ -409,7 +409,7 @@ int main (int argc, char** argv)
 	{
 	  new_it_fn it_fn = n_3opt_new_it;
 	  neighborhood_fn n_fn = n_3opt_next;
-	  double runtime = 10;
+	  runtime = 10;
 
 	  if (argc > 6) {
 	    if (atoi(argv[6]) == 0)
@@ -513,8 +513,9 @@ int main (int argc, char** argv)
 	return 2;
       }
 
+      runtime = atoi(argv[4]);
       p = h_grasp(g, strtod(argv[3], &end), grasp_nearest_neigbor,
-	  grasp_ls, atoi(argv[4]));
+	  grasp_ls, runtime);
       cost = cbtsp_o(g, p);
     }
   // VND
