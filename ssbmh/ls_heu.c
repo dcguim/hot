@@ -359,46 +359,47 @@ path * n_3opt_next (graph * g, path * p, void* n_it)
 		  // cost of edges to remove
 		  cost_t d0 = distance(g, v1a, v1b) + distance(g, v2a, v2b) + distance(g, v3a, v3b);
 
-		  cost_t f0 = llabs(d0);
+		  cost_t f0 = llabs(n->distance);
+
 		  cost_t d_3a1b = distance(g, v1b, v3a);
-		  cost_t d1 = distance(g, v1a, v2a) + d_3a1b + distance(g, v2b, v3b);
+		  cost_t d1 = n->distance - d0 + distance(g, v1a, v2a) + d_3a1b + distance(g, v2b, v3b);
 		  if (llabs(d1) < f0)
 		    {
 		      path_reverse(n, it->i + 1, it->j);
 		      path_reverse(n, it->j + 1, it->k);
-		      n->distance += d1 - d0;
+		      n->distance = d1;
 		      it->k += 1;
 		      return n;
 		    }
 
 		  cost_t d_1a2b = distance(g, v1a, v2b);
-		  cost_t d2 = d_1a2b + distance(g, v3a, v2a) + distance(g, v1b, v3b);
+		  cost_t d2 = n->distance - d0 + d_1a2b + distance(g, v3a, v2a) + distance(g, v1b, v3b);
 		  if (llabs(d2) < f0)
 		    {
 		      path_reverse(n, it->j + 1, it->k);
 		      path_reverse(n, it->k + 1, it->i);
-		      n->distance += d2 - d0;
+		      n->distance = d2;
 		      it->k += 1;
 		      return n;
 		    }
 
 		  cost_t d_2a3b = distance(g, v2a, v3b);
-		  cost_t d3 = distance(g, v1a, v3a) + distance(g, v2b, v1b) + d_2a3b;
+		  cost_t d3 = n->distance - d0 + distance(g, v1a, v3a) + distance(g, v2b, v1b) + d_2a3b;
 		  if (llabs(d3) < f0)
 		    {
 		      path_reverse(n, it->i + 1, it->j);
 		      // this needs to go second because afterwards indices in it are invalid
 		      path_reverse(n, it->k + 1, it->i);
-		      n->distance += d3 - d0;
+		      n->distance = d3;
 		      it->k += 1;
 		      return n;
 		    }
 
-		  cost_t d4 = d_1a2b + d_3a1b + d_2a3b;
+		  cost_t d4 = n->distance - d0 + d_1a2b + d_3a1b + d_2a3b;
 		  if (llabs(d4) < f0)
 		    {
 		      path_move(n, it->j + 1, it->k, it->i + 1);
-		      n->distance += d4 - d0;
+		      n->distance = d4;
 		      it->k += 1;
 		      return n;
 		    }
