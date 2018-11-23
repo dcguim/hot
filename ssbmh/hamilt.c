@@ -364,9 +364,10 @@ int main (int argc, char** argv)
   // Local search
   else if (strcmp("ls", alg) == 0)
     {
+      char ls_usage[] = "USAGE: %s START_VERTEX_ID NEIGHBORHOOD STEP_FN [RUNTIME_SECONDS]\n";
       if (argc < 6 || atoi(argv[3]) == 0)
       {
-	printf("USAGE: %s START_VERTEX_ID NEIGHBORHOOD STEP_FN [RUNTIME_SECONDS]\n", alg);
+	printf(ls_usage, alg);
 	return 2;
       }
 
@@ -401,7 +402,7 @@ int main (int argc, char** argv)
 	  if (argc > 6) {
 	    if (atoi(argv[6]) == 0)
 	      {
-		printf("USAGE: %s START_VERTEX_ID NEIGHBORHOOD STEP_FN [RUNTIME_SECONDS]\n", alg);
+		printf(ls_usage, alg);
 		return 2;
 	      }
 	    else
@@ -437,12 +438,52 @@ int main (int argc, char** argv)
 	}
       else if (strcmp("2.5opt", nb) == 0)
 	{
-	  printf("NOT IMPLEMENTED\n");
-	  return 3;
+	  new_it_fn it_fn = n_25opt_new_it;
+	  neighborhood_fn n_fn = n_25opt_next;
+	  runtime = 10;
+
+	  if (argc > 6) {
+	    if (atoi(argv[6]) == 0)
+	      {
+		printf(ls_usage, alg);
+		return 2;
+	      }
+	    else
+	      {
+		runtime = atoi(argv[6]);
+	      }
+	  }
+
+	  if (strcmp("first_improv", step) == 0)
+	    {
+	      step_fn s_fn = first_improv;
+	      p = local_search(g, init_p, s_fn, n_fn, it_fn, runtime);
+	      cost = cbtsp_o(g, p);
+	    }
+	  else if (strcmp("best_improv", step) == 0)
+	    {
+	      step_fn s_fn = best_improv;
+	      p = local_search(g, init_p, s_fn, n_fn, it_fn, runtime);
+	      cost = cbtsp_o(g, p);
+	    }
+	  else if (strcmp("rand", step) == 0)
+	    {
+	      printf("NOT IMPLEMENTED\n");
+	      return 3;
+	      //step_fn s_fn = single_step;
+	      //n_fn = n_3opt_rand;
+	      //p = local_search(g, init_p, s_fn, n_fn, it_fn, runtime);
+	      //cost = cbtsp_o(g, p);
+	    }
+	  else
+	    {
+	      printf("Available step functions: first_improv, best_improv, rand\n");
+	      return 2;
+	    }
 	}
       else
 	{
-	  printf("Available neighborhoods: 2opt, 3opt\n");
+	  printf("Available neighborhoods: 2opt, 3opt, 2.5opt\n");
 	  return 2;
 	}
       if (init_p != p)

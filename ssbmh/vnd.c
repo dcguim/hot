@@ -28,15 +28,17 @@ path * n2(path * p)
 
 path * n3(path * p)
 {
-  //TODO add when implemented
-  return p;
+  n_25opt_it * it = n_25opt_new_it();
+  path * n = first_improv(g, p, n_25opt_next, it);
+  free(it);
+  return n;
 }
 
-#define N_LENGTH 2
+#define N_LENGTH 3
 
 path * h_vnd(graph * g, path * p)
 {
-  neighbor neighborhoods[] = {n1, n2, n3};
+  neighbor neighborhoods[] = {n3, n1, n2};
   int neighborhood_i = 0;
   path * best_candidate = copy_path(p);
   cost_t best_candidate_o = cbtsp_o(g, best_candidate);
@@ -59,6 +61,7 @@ path * h_vnd(graph * g, path * p)
           }
         }
       neighborhood_i += 1;
+      printd("N%d -> N%d\n", neighborhood_i - 1, neighborhood_i);
     }
   return best_candidate;
 }

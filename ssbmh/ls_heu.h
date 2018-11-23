@@ -7,6 +7,10 @@ typedef struct n_3opt_it {
   int i, j, k;
 } n_3opt_it;
 
+typedef struct n_25opt_it {
+  int i, j, s;
+} n_25opt_it;
+
 typedef path * (*neighborhood_fn)(graph * g, path * p, void* it);
 
 typedef path * (*step_fn)(graph * g, path * p, neighborhood_fn n_next, void* it);
@@ -29,9 +33,13 @@ path * local_search(graph * g, path * p, step_fn step, neighborhood_fn n_next, n
 
 n_3opt_it * n_3opt_new_it ();
 
+n_25opt_it * n_25opt_new_it ();
+
 path * n_3opt_next (graph *g, path * p, void* it);
 
 path * n_3opt_rand (graph *g, path * p, void* it);
+
+path * n_25opt_next (graph * g, path * p, void* it);
 
 path * first_improv (graph * g, path * p, neighborhood_fn n_next, void* it);
 
