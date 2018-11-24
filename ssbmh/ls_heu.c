@@ -533,6 +533,10 @@ path * first_improv (graph * g, path * p, neighborhood_fn n_next, void* it)
 	    {
 	       return candidate;
 	    }
+	  else
+	   {
+	     free_path(candidate);
+	   }
 	}
     }
 }
