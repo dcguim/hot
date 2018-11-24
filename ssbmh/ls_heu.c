@@ -443,7 +443,7 @@ path * n_25opt_next (graph * g, path * p, void* n_it)
 
   for (;;)
     {
-      if (it->i < p->length - 4)
+      if (it->i < p->length - 2)
 	{
 	  int v1a = p->path[it->i], v1b = p->path[it->i + 1];
 	  int v2a = v1b, v2b = p->path[it->i + 2];
@@ -470,7 +470,7 @@ path * n_25opt_next (graph * g, path * p, void* n_it)
 	      it->s = 1;
 	    }
 
-	  if (it->j < p->length - 2 - (it->i == 0))
+	  if (it->j < p->length - (it->i == 0))
 	    {
 	      // skip edges next to the other two edge choices
 	      if (it->j > it->i - 2 && it->j < (it->i + 3) % (p->length - 1))
