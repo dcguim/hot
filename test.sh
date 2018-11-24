@@ -44,21 +44,32 @@ det_ch() {
 
 rand_ch() {
 	for f in *.txt; do
-		local grasp_runtime=$((60*10))
 		local r_list="0.4"
 		n=$(echo $f | sed -r 's/[^0-9]//g; s/^0*//;')
-		for alg in rand_ch grasp; do
+		for alg in rand_ch; do
 			if [ "$1" == "-s" ]; then
 				sort -k1 -n results/${alg}_${f%%.txt}_*.txt | head -n1 > "summaries/${alg}_${f%%.txt}.txt"
 			elif [ "$1" == "-c" ]; then
 				export_sol ${alg}_${f%%.txt}.txt
 			else
-				for t in {0..11}; do
+				for t in {0..29}; do
 					for rand in $r_list; do
 						queue "${alg}_${f%%.txt}_${rand}_${t}" "$COMMAND $f $alg $rand $grasp_runtime" "results/${alg}_${f%%.txt}_${rand}_$t.txt"
 					done
 				done
 			fi
+		done
+	done
+}
+
+grasp() {
+	local runtime=$((60*10))
+	local rand="0.4"
+	local alg=grasp
+	for f in *.txt; do
+		n=$(echo $f | sed -r 's/[^0-9]//g; s/^0*//;')
+		for t in {0..19}; do
+			queue "${alg}_${f%%.txt}_${rand}_${t}" "$COMMAND $f $alg $rand $runtime" "results/${alg}_${f%%.txt}_${rand}_$t.txt"
 		done
 	done
 }
@@ -87,6 +98,7 @@ vnd() {
 case "$1" in
 	det_ch) shift; det_ch "$@";;
 	rand_ch) shift; rand_ch "$@" ;;
+	grasp) shift; grasp "$@" ;;
 	ls) shift; local_search "$@" ;;
 	vnd) shift; vnd "$@" ;;
 esac
