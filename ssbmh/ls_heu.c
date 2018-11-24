@@ -473,7 +473,7 @@ path * n_25opt_next (graph * g, path * p, void* n_it)
 	  if (it->j < p->length - (it->i == 0))
 	    {
 	      // skip edges next to the other two edge choices
-	      if (it->j > it->i - 2 && it->j < (it->i + 3) % (p->length - 1))
+	      if (it->j > it->i - 2 && it->j < (it->i + 3))
 		{
 		  it->j = it->i + 3;
 		  continue;
