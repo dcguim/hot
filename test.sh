@@ -7,6 +7,12 @@ export_sol() {
 	cut -d' ' -f3- $1 > /tmp/sol_$1
 }
 
+if which qsub 1>&2 2>/dev/null; then
+	COMMAND="./hamilt.sh"
+else
+	COMMAND="./hamilt"
+fi
+
 queue() {
 	local name="$1"
 	local command="$2"
@@ -20,8 +26,24 @@ queue() {
 	fi
 }
 
-ch() {
-	for f in 00*.txt; do
+det_ch() {
+	for f in *.txt; do
+		n=$(echo $f | sed -r 's/[^0-9]//g; s/^0*//;')
+		alg=det_ch
+		if [ "$1" == "-s" ]; then
+			sort -k1 -n results/${alg}_${f%%.txt}_*.txt | head -n1 > "summaries/${alg}_${f%%.txt}.txt"
+		elif [ "$1" == "-c" ]; then
+			export_sol ${alg}_${f%%.txt}.txt
+		else
+			while [ $((n--)) -gt 0 ]; do
+				queue "${alg}_${f%%.txt}_${n}" "$COMMAND $f $alg $n" "results/${alg}_${f%%.txt}_${n}.txt"
+			done
+		fi
+	done
+}
+
+rand_ch() {
+	for f in *.txt; do
 		local grasp_runtime=$((60*10))
 		local r_list="0.4"
 		n=$(echo $f | sed -r 's/[^0-9]//g; s/^0*//;')
@@ -33,23 +55,15 @@ ch() {
 			else
 				for t in {0..11}; do
 					for rand in $r_list; do
-						queue "${alg}_${f%%.txt}_${rand}_${t}" "./hamilt $f $alg $rand $grasp_runtime" "results/${alg}_${f%%.txt}_${rand}_$t.txt"
+						queue "${alg}_${f%%.txt}_${rand}_${t}" "$COMMAND $f $alg $rand $grasp_runtime" "results/${alg}_${f%%.txt}_${rand}_$t.txt"
 					done
 				done
 			fi
 		done
-
-		alg=det_ch
-		if [ "$1" == "-s" ]; then
-			sort -k1 -n results/${alg}_${f%%.txt}_*.txt | head -n1 > "summaries/${alg}_${f%%.txt}.txt"
-		elif [ "$1" == "-c" ]; then
-			export_sol ${alg}_${f%%.txt}.txt
-		else
-			while [ $((--n)) -gt 0 ]; do
-				queue "${alg}_${f%%.txt}_${n}" "./hamilt $f $alg $n" "results/${alg}_${f%%.txt}_${n}.txt"
-			done
-		fi
 	done
 }
 
-ch "$@"
+case "$1" in
+	det_ch) shift; det_ch "$@";;
+	rand_ch) shift; rand_ch "$@" ;;
+esac
