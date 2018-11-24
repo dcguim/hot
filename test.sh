@@ -76,8 +76,17 @@ local_search() {
 	done
 }
 
+vnd() {
+	local alg=vnd
+	for f in *.txt; do
+		v=$(sort -k1 -n results/det_ch_${f%%.txt}_*.txt | head -n1 | cut -d' ' -f 2)
+		queue "${alg}_${f%%.txt}" "$COMMAND $f $alg $v" "results/${alg}_${f%%.txt}.txt"
+	done
+}
+
 case "$1" in
 	det_ch) shift; det_ch "$@";;
 	rand_ch) shift; rand_ch "$@" ;;
 	ls) shift; local_search "$@" ;;
+	vnd) shift; vnd "$@" ;;
 esac
