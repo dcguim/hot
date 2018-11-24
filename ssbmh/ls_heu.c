@@ -460,10 +460,10 @@ path * n_25opt_next (graph * g, path * p, void* n_it)
 		}
 
 	      cost_t c1 = distance(g, v1a, v1b);
-	      printd("c1=%lld\n", c2);
+	      printd("c1=%lld\n", c1);
 	      if (c1 != g->bigM)
 		{
-		  it->i += 2;
+		  it->i += 1;
 		  it->j = 0;
 		  continue;
 		}
