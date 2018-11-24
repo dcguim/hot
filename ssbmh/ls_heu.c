@@ -333,7 +333,7 @@ void path_move (path * p, int i, int j, int t)
   int m = i - t;
   int * tmp = (int*)malloc(m * sizeof(int));
   memcpy(tmp, p->path + t, m * sizeof(int));
-  memcpy(p->path + t, p->path + i, l * sizeof(int));
+  memmove(p->path + t, p->path + i, l * sizeof(int));
   memcpy(p->path + t + l, tmp, m * sizeof(int));
   free(tmp);
 }
