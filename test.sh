@@ -63,7 +63,21 @@ rand_ch() {
 	done
 }
 
+local_search() {
+	local runtime=$((60*10))
+	local alg=ls
+	for f in *.txt; do
+		v=$(sort -k1 -n results/det_ch_${f%%.txt}_*.txt | head -n1 | cut -d' ' -f 2)
+		for n in 2.5opt 3opt; do
+			for s in first_improv best_improv rand; do
+				queue "${alg}_${f%%.txt}_${n}_${s}" "$COMMAND $f $alg $v $n $s $runtime" "results/${alg}_${f%%.txt}_${n}_${s}.txt"
+			done
+		done
+	done
+}
+
 case "$1" in
 	det_ch) shift; det_ch "$@";;
 	rand_ch) shift; rand_ch "$@" ;;
+	ls) shift; local_search "$@" ;;
 esac
