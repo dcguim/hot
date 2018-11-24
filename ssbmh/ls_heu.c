@@ -487,10 +487,10 @@ path * n_25opt_next (graph * g, path * p, void* n_it)
 
 	      if (it->j < it->i)
 		{
-		  path_reverse(n, 0, n->length);
+		  path_reverse(n, 0, n->length - 1);
 		  path_move(n, n->length - it->i, n->length - (it->j + 1),
 		      n->length - (it->i + 1));
-		  path_reverse(n, 0, n->length);
+		  path_reverse(n, 0, n->length - 1);
 		}
 	      else
 		{
