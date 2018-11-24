@@ -652,11 +652,17 @@ path * local_search(graph * g, path * p, step_fn step, neighborhood_fn n_next, n
   void * it = new_it();
   int max_fails = ceil(log(p->length));
   int fails = 0;
+  int iterations = 0;
   while ((clock() - beginning) / CLOCKS_PER_SEC < runtime_seconds && fails < max_fails)
     {
+      iterations += 1;
       p_candidate = step(g, best_candidate, n_next, it);
       if (p_candidate == NULL)
 	{
+	  printf("ls_iterations %d\n", iterations);
+	  printf("ls_fails %d\n", fails);
+	  printf("ls_max_fails %d\n", max_fails);
+	  printf("ls_runtime_sec %ld\n", (clock() - beginning) / CLOCKS_PER_SEC);
 	  return best_candidate;
 	}
       else
