@@ -83,7 +83,8 @@ int choose_candidate_list_len (int max, double r)
     }
   else
     {
-      return floor(max * r);
+      int l = floor(max * r);
+      return l < 2 && max > 1 ? 2 : l;
     }
 }
 

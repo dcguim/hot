@@ -47,4 +47,6 @@ path * first_improv (graph * g, path * p, neighborhood_fn n_next, void* it);
 
 path * best_improv (graph * g, path * p, neighborhood_fn n_next, void* it);
 
+path * rand_step (graph * g, path * p, neighborhood_fn n_next, void* it);
+
 path * single_step (graph * g, path * p, neighborhood_fn n_next, void* it);

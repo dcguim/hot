@@ -410,7 +410,7 @@ void path_move (path * p, int i, int j, int t)
   int m = i - t;
   int * tmp = (int*)malloc(m * sizeof(int));
   memcpy(tmp, p->path + t, m * sizeof(int));
-  memcpy(p->path + t, p->path + i, l * sizeof(int));
+  memmove(p->path + t, p->path + i, l * sizeof(int));
   memcpy(p->path + t + l, tmp, m * sizeof(int));
   free(tmp);
 }
@@ -436,46 +436,47 @@ path * n_3opt_next (graph * g, path * p, void* n_it)
 		  // cost of edges to remove
 		  cost_t d0 = distance(g, v1a, v1b) + distance(g, v2a, v2b) + distance(g, v3a, v3b);
 
-		  cost_t f0 = llabs(d0);
+		  cost_t f0 = llabs(n->distance);
+
 		  cost_t d_3a1b = distance(g, v1b, v3a);
-		  cost_t d1 = distance(g, v1a, v2a) + d_3a1b + distance(g, v2b, v3b);
+		  cost_t d1 = n->distance - d0 + distance(g, v1a, v2a) + d_3a1b + distance(g, v2b, v3b);
 		  if (llabs(d1) < f0)
 		    {
 		      path_reverse(n, it->i + 1, it->j);
 		      path_reverse(n, it->j + 1, it->k);
-		      n->distance += d1 - d0;
+		      n->distance = d1;
 		      it->k += 1;
 		      return n;
 		    }
 
 		  cost_t d_1a2b = distance(g, v1a, v2b);
-		  cost_t d2 = d_1a2b + distance(g, v3a, v2a) + distance(g, v1b, v3b);
+		  cost_t d2 = n->distance - d0 + d_1a2b + distance(g, v3a, v2a) + distance(g, v1b, v3b);
 		  if (llabs(d2) < f0)
 		    {
 		      path_reverse(n, it->j + 1, it->k);
 		      path_reverse(n, it->k + 1, it->i);
-		      n->distance += d2 - d0;
+		      n->distance = d2;
 		      it->k += 1;
 		      return n;
 		    }
 
 		  cost_t d_2a3b = distance(g, v2a, v3b);
-		  cost_t d3 = distance(g, v1a, v3a) + distance(g, v2b, v1b) + d_2a3b;
+		  cost_t d3 = n->distance - d0 + distance(g, v1a, v3a) + distance(g, v2b, v1b) + d_2a3b;
 		  if (llabs(d3) < f0)
 		    {
 		      path_reverse(n, it->i + 1, it->j);
 		      // this needs to go second because afterwards indices in it are invalid
 		      path_reverse(n, it->k + 1, it->i);
-		      n->distance += d3 - d0;
+		      n->distance = d3;
 		      it->k += 1;
 		      return n;
 		    }
 
-		  cost_t d4 = d_1a2b + d_3a1b + d_2a3b;
+		  cost_t d4 = n->distance - d0 + d_1a2b + d_3a1b + d_2a3b;
 		  if (llabs(d4) < f0)
 		    {
 		      path_move(n, it->j + 1, it->k, it->i + 1);
-		      n->distance += d4 - d0;
+		      n->distance = d4;
 		      it->k += 1;
 		      return n;
 		    }
@@ -519,7 +520,7 @@ path * n_25opt_next (graph * g, path * p, void* n_it)
 
   for (;;)
     {
-      if (it->i < p->length - 4)
+      if (it->i < p->length - 2)
 	{
 	  int v1a = p->path[it->i], v1b = p->path[it->i + 1];
 	  int v2a = v1b, v2b = p->path[it->i + 2];
@@ -536,20 +537,20 @@ path * n_25opt_next (graph * g, path * p, void* n_it)
 		}
 
 	      cost_t c1 = distance(g, v1a, v1b);
-	      printd("c1=%lld\n", c2);
+	      printd("c1=%lld\n", c1);
 	      if (c1 != g->bigM)
 		{
-		  it->i += 2;
+		  it->i += 1;
 		  it->j = 0;
 		  continue;
 		}
 	      it->s = 1;
 	    }
 
-	  if (it->j < p->length - 2 - (it->i == 0))
+	  if (it->j < p->length - 1 - (it->i == 0))
 	    {
 	      // skip edges next to the other two edge choices
-	      if (it->j > it->i - 2 && it->j < (it->i + 3) % (p->length - 1))
+	      if (it->j > it->i - 2 && it->j < (it->i + 3))
 		{
 		  it->j = it->i + 3;
 		  continue;
@@ -563,10 +564,10 @@ path * n_25opt_next (graph * g, path * p, void* n_it)
 
 	      if (it->j < it->i)
 		{
-		  path_reverse(n, 0, n->length);
-		  path_move(n, n->length - it->i, n->length - (it->j + 1),
-		      n->length - (it->i + 1));
-		  path_reverse(n, 0, n->length);
+		  path_reverse(n, 0, n->length - 1);
+		  path_move(n, n->length - it->i - 1, n->length - (it->j + 2),
+		      n->length - it->i - 2);
+		  path_reverse(n, 0, n->length - 1);
 		}
 	      else
 		{
@@ -609,6 +610,10 @@ path * first_improv (graph * g, path * p, neighborhood_fn n_next, void* it)
 	    {
 	       return candidate;
 	    }
+	  else
+	   {
+	     free_path(candidate);
+	   }
 	}
     }
 }
@@ -649,6 +654,70 @@ path * best_improv (graph * g, path * p, neighborhood_fn n_next, void* it)
     }
 }
 
+path * rand_step (graph * g, path * p, neighborhood_fn n_next, void* it)
+{
+  int paths_i = 0;
+  int paths_len = p->length;
+  path ** paths = (path**)malloc(paths_len * sizeof(path*));
+  path * candidate = NULL;
+  cost_t cost = cbtsp_o(g, p);
+  for (;;)
+    {
+      candidate = n_next (g, p, it);
+      if (candidate == NULL)
+      {
+	if (paths_i == 0)
+	  {
+	    return NULL;
+	  }
+	int * indices = (int*)malloc(paths_i * sizeof(int));
+	for (int i = 0; i < paths_i; ++i)
+	  {
+	    indices[i] = i;
+	  }
+	int tmp_i, shuffle_i;
+	for (int i = 0; i < paths_i; ++i)
+	  {
+	    shuffle_i = floor(paths_i * rand_double());
+	    tmp_i = indices[i];
+	    indices[i] = indices[shuffle_i];
+	    indices[shuffle_i] = tmp_i;
+	  }
+
+	path * n = NULL;
+	int rand_index = -1;
+	for (int i = 0; i < paths_i; ++i)
+	  {
+	    if (cbtsp_o(g, paths[indices[i]]) < cost)
+	      {
+		rand_index = indices[i];
+		n = paths[rand_index];
+		break;
+	      }
+	  }
+	for (int i = 0; i < paths_i; ++i)
+	  {
+	    if (i != rand_index)
+	      {
+		free(paths[i]);
+	      }
+	  }
+	free(paths);
+	return n;
+      }
+      if (paths_i == paths_len)
+	{
+	  int new_paths_len = paths_len * 2;
+	  path ** new_paths = (path**)malloc(new_paths_len * sizeof(path*));
+	  memcpy(new_paths, paths, paths_len * sizeof(path*));
+	  free(paths);
+	  paths = new_paths;
+	  paths_len = new_paths_len;
+	}
+      paths[paths_i++] = candidate;
+    }
+}
+
 path * single_step (graph * g, path * p, neighborhood_fn n_next, void* it)
 {
   return n_next(g, p, it);
@@ -662,11 +731,19 @@ path * local_search(graph * g, path * p, step_fn step, neighborhood_fn n_next, n
   path * best_candidate = p;
   cost_t best_candidate_cost = cbtsp_o(g, p);
   void * it = new_it();
-  while ((clock() - beginning) / CLOCKS_PER_SEC < runtime_seconds)
+  int max_fails = ceil(log(p->length));
+  int fails = 0;
+  int iterations = 0;
+  while ((clock() - beginning) / CLOCKS_PER_SEC < runtime_seconds && fails < max_fails)
     {
+      iterations += 1;
       p_candidate = step(g, best_candidate, n_next, it);
       if (p_candidate == NULL)
 	{
+	  printf("ls_iterations %d\n", iterations);
+	  printf("ls_fails %d\n", fails);
+	  printf("ls_max_fails %d\n", max_fails);
+	  printf("ls_runtime_sec %ld\n", (clock() - beginning) / CLOCKS_PER_SEC);
 	  return best_candidate;
 	}
       else
@@ -680,9 +757,13 @@ path * local_search(graph * g, path * p, step_fn step, neighborhood_fn n_next, n
 		}
 	      best_candidate = p_candidate;
 	      best_candidate_cost = p_candidate_o;
-	      free(it);
-	      it = new_it();
 	    }
+	  else
+	    {
+	      fails += 1;
+	    }
+	  free(it);
+	  it = new_it();
 	}
     }
   free(it);

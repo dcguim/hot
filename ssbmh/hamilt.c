@@ -318,6 +318,11 @@ int feasible(path * p)
   return -2;
 }
 
+int is_int(const char* val)
+{
+  return strcmp("0", val) == 0 || atoi(val) != 0;
+}
+
 graph * g;
 double runtime;
 
@@ -349,7 +354,7 @@ int main (int argc, char** argv)
   // Deterministic construction heuristic
   if (strcmp("det_ch", alg) == 0)
     {
-      if (argc < 4 || atoi(argv[3]) == 0)
+      if (argc < 4 || !is_int(argv[3]))
       {
 	printf("USAGE: %s START_VERTEX_ID\n", alg);
 	return 2;
@@ -376,7 +381,7 @@ int main (int argc, char** argv)
   else if (strcmp("ls", alg) == 0)
     {
       char ls_usage[] = "USAGE: %s START_VERTEX_ID NEIGHBORHOOD STEP_FN [RUNTIME_SECONDS]\n";
-      if (argc < 6 || atoi(argv[3]) == 0)
+      if (argc < 6 || !is_int(argv[3]))
       {
 	printf(ls_usage, alg);
 	return 2;
@@ -455,7 +460,7 @@ int main (int argc, char** argv)
 	  runtime = 10;
 
 	  if (argc > 6) {
-	    if (atoi(argv[6]) == 0)
+	    if (!is_int(argv[6]))
 	      {
 		printf(ls_usage, alg);
 		return 2;
@@ -480,12 +485,9 @@ int main (int argc, char** argv)
 	    }
 	  else if (strcmp("rand", step) == 0)
 	    {
-	      printf("NOT IMPLEMENTED\n");
-	      return 3;
-	      //step_fn s_fn = single_step;
-	      //n_fn = n_3opt_rand;
-	      //p = local_search(g, init_p, s_fn, n_fn, it_fn, runtime);
-	      //cost = cbtsp_o(g, p);
+	      step_fn s_fn = rand_step;
+	      p = local_search(g, init_p, s_fn, n_fn, it_fn, runtime);
+	      cost = cbtsp_o(g, p);
 	    }
 	  else
 	    {
@@ -507,7 +509,7 @@ int main (int argc, char** argv)
   else if (strcmp("grasp", alg) == 0)
     {
       char * end;
-      if (argc < 5 || strtod(argv[3], &end) == 0 || atoi(argv[4]) == 0)
+      if (argc < 5 || strtod(argv[3], &end) == 0 || !is_int(argv[4]))
       {
 	printf("USAGE: %s RANDOMIZATION_FACTOR RUNTIME_SECONDS\n", alg);
 	return 2;
@@ -521,7 +523,7 @@ int main (int argc, char** argv)
   // VND
   else if (strcmp("vnd", alg) == 0)
     {
-      if (argc < 4 || atoi(argv[3]) == 0)
+      if (argc < 4 || !is_int(argv[3]))
       {
 	printf("USAGE: %s START_VERTEX_ID\n", alg);
 	return 2;
