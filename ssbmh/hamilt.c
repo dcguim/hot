@@ -13,7 +13,7 @@
 #include "ls_heu.h"
 #include "grasp.h"
 #include "vnd.h"
-
+#include "tabu_heu.h"
 #define INC_EVAL 0
 
 void rand_seed()
@@ -341,7 +341,7 @@ int main (int argc, char** argv)
 
   char * file = argv[1];
   char * alg = argv[2];
-
+  printf("%s\n", file);
   g = graph_from_file(file);
   cost_t cost = 0;
   path * p = NULL;
@@ -391,7 +391,7 @@ int main (int argc, char** argv)
 	{
 	  if (strcmp("best_improv", step) == 0)
 	    {
-	      p = ls_best_improv(g, init_p);
+	      p = fix_point_ls_best_improv(g, init_p);
 	      cost = cbtsp_o(g, p);
 	    }
 	  else if (strcmp("first_improv", step) == 0)
@@ -532,16 +532,27 @@ int main (int argc, char** argv)
       cost = cbtsp_o(g, p);
       free(init_p);
     }
+  // Tabu
+  else if (strcmp("tabu", alg) == 0)
+    {
+      if (argc < 4 || atoi(argv[3]) == 0)
+      {
+	printf("USAGE: %s START_VERTEX_ID\n", alg);
+	return 2;
+      }
+      path * init_p = ch_nearest_neighbor(g, atoi(argv[3]));
+      p = tabu(g, init_p);
+      cost = cbtsp_o(g, p);
+    }
   else
     {
       printf("Invalid algorithm name \"%s\"\n", alg);
       printf("Available algorithms: det_ch, rand_ch, ls, grasp, vnd\n");
       return 1;
     }
-
+  
   printf("%lld ", cost);
   path_print(p);
-  assert(llabs(p->distance) == cost);
   free_path(p);
   return 0;
 }

@@ -50,7 +50,7 @@ void neighb_print(pair_edge* neighb, int neighb_len)
 	printf("\n");
       else
 	printf("-> ");
-      printf("(%d %d) , (%d %d) ",neighb[i].e1->v1.id,neighb[i].e1->v2.id,
+      printf("[%d](%d %d) , (%d %d) ",i,neighb[i].e1->v1.id,neighb[i].e1->v2.id,
 	     neighb[i].e2->v1.id,neighb[i].e2->v2.id);
     }
   printf("\n");
@@ -78,7 +78,20 @@ void calc_path_combinations(path* p, pair_edge*  result, int start, int index,
     }
   return;
 }
-
+int comp_edge(edge* e1, edge* e2)
+{
+  if ((e1->v1.id == e2->v1.id && e1->v2.id == e2->v2.id) ||
+      (e1->v1.id == e2->v2.id && e1->v2.id == e2->v1.id))
+    return 1;
+  return 0;
+}
+int comp_pair_edge(pair_edge* p1, pair_edge* p2)
+{
+  if ((comp_edge(p1->e1,p2->e1) == 1 && comp_edge(p1->e2,p2->e2) == 1) ||
+      (comp_edge(p1->e1,p2->e2) == 1 && comp_edge(p1->e2,p2->e1) == 1))
+    return 1;
+  return 0;    
+}
 // This function return all 2 combinations of all the edges in the path
 void path_combinations(path* p, pair_edge* comb, int r)
 {  
@@ -86,12 +99,10 @@ void path_combinations(path* p, pair_edge* comb, int r)
   return;
 }
 int edges_connectedp(edge* e1, edge* e2)
- {  
+{  
   if (e1->v1.id == e2->v1.id || e1->v1.id == e2->v2.id ||
       e1->v2.id == e2->v1.id || e1->v2.id == e2->v2.id)
-    {
-      return 1;
-    }
+    return 1;
   return 0;
 }
 int edges_equal(edge* e1, edge* e2)
@@ -188,9 +199,7 @@ const int in_path(edge e,path * p)
     {
       if ((p->path[i] == e.v1.id && p->path[i+1] == e.v2.id) ||
 	  (p->path[i] == e.v2.id && p->path[i+1] == e.v1.id))
-	{
-	  return i;
-	}
+	return i;
     }
   return -1;
 }
@@ -224,6 +233,7 @@ void replace_edges (path* r, path* p, pair_edge* edges, int len)
 {
   // For the invertion of the interval between the two edges in the path
   int interval[2];
+  r->distance = p->distance;
   for (int i=0;i<len;i++)
     {
       int j = in_path(*edges[i].e1,p);
@@ -235,25 +245,88 @@ void replace_edges (path* r, path* p, pair_edge* edges, int len)
 	{
 	  r->path[j] = edges[i].e2->v1.id;
 	  r->path[j+1] = edges[i].e2->v2.id;
+	  r->distance = r->distance - edges[i].e1->c;
+	  r->distance = r->distance + edges[i].e2->c;
 	}
     }
   r = invert(r, interval[0], interval[1]);
 }
+void update_neighb(pair_edge* neighb, int* neighb_len, pair_edge* restr,
+		   int restr_len)
+{
+  int rem_len = 0;
+  int irem_len = *neighb_len/2;
+  int* irem  = (int*)malloc(irem_len*sizeof(int));
+  for (int j=0; j<irem_len; j++)
+    {
+      int ind = j*2;
+      irem[j] = -1;
+      for (int i=0; i<restr_len; i++)
+	if(comp_pair_edge(&(restr[i]), &(neighb[ind])) == 1)
+	  {
+	    irem[rem_len] = ind;
+	    rem_len++;
+	  }		
+    }
+  for(int i=0;i<rem_len+1;i++)
+    {
+      if (irem[i] + 2 < *neighb_len && irem[i] >= 0)
+	{
+	  for (int j=irem[i];j<irem_len-2;j++)
+	    {
+	      neighb[j].e1->v1.id = neighb[j+2].e1->v1.id;
+	      neighb[j].e1->v2.id = neighb[j+2].e1->v2.id;
+	      neighb[j].e2->v1.id = neighb[j+2].e2->v1.id;
+	      neighb[j].e2->v2.id = neighb[j+2].e2->v2.id;
+	      neighb[j+1].e1->v1.id = neighb[j+3].e1->v1.id;
+	      neighb[j+1].e1->v2.id = neighb[j+3].e1->v2.id;
+	      neighb[j+1].e2->v1.id = neighb[j+3].e2->v1.id;
+	      neighb[j+1].e2->v2.id = neighb[j+3].e2->v2.id;
+	    }
+	}
+    }
+  *neighb_len = *neighb_len - 2*restr_len;
+  free(irem);
+}
 
-path* ls_best_improv (graph* g, path* p)
+path* fix_point_ls_best_improv (graph* g, path* init_p)
+{
+  path* p = NULL;
+  while (init_p != p)
+    {
+      if (p != NULL)
+	{
+	  assign_path (init_p, p);
+	  free_path(p);
+	}
+      p = ls_best_improv(g, init_p, NULL, 0, NULL);
+    }
+  return p;
+}
+
+path* ls_best_improv (graph* g, path* p, pair_edge* restr, int restr_len,
+		      pair_edge* rep_pair)
 {
   int j = 0;
   int min_ineigh = -1;
   int basecost = cbtsp_o(g, p);
   int neighb_len = 0;
   pair_edge* neighb = neighb_str(g, p, &neighb_len);
-  printf("neighborhood of size: %d\n",neighb_len);
-
+  int total_neighb_len = neighb_len;
+  if (restr != NULL)
+    {
+      update_neighb(neighb,&neighb_len,restr,restr_len);
+      if (neighb_len < 1)
+	{
+	  free_pair_edge(neighb, total_neighb_len);
+	  return p;
+	}
+    }
   // Create an auxiliary path that will be used to hold all the paths
   // created by replacing edges
   path* r = copy_path(p);
   path* sol = new_path(p->length);
-  pair_edge edges[2];  
+  pair_edge edges[2];
   do
     {
       edges[0].e1 = neighb[j].e1;
@@ -266,21 +339,25 @@ path* ls_best_improv (graph* g, path* p)
       int rcost = cbtsp_o(g, r);
       if (rcost < basecost)
 	{
+	  if (rep_pair != NULL)
+	    {
+	      rep_pair->e1->v1.id = neighb[j+1].e1->v1.id;
+	      rep_pair->e1->v2.id = neighb[j+1].e1->v2.id;
+	      rep_pair->e2->v1.id = neighb[j+1].e2->v1.id;
+	      rep_pair->e2->v2.id = neighb[j+1].e2->v2.id;
+	    }
 	  min_ineigh = j;
 	  basecost = rcost;
 	  assign_path(sol,r);
 	}
-      
-     
       // Refresh r to be equal to p for the next iteration
       assign_path(r,p); 
       j = j+2;
     }
   while (j < neighb_len);
-
   // Free the auxiliary variables
   free_path(r);
-  free_pair_edge(neighb, neighb_len);
+  free_pair_edge(neighb, total_neighb_len);  
   if (min_ineigh == -1)
     return p;
   else    

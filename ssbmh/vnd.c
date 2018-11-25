@@ -10,7 +10,7 @@ graph * g;
 
 path * n1(path * p)
 {
-  path * n = ls_best_improv(g, p);
+  path * n = ls_best_improv(g, p, NULL, 0, NULL);
   if (n == p)
     {
       return NULL;

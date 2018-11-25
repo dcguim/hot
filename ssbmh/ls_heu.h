@@ -19,11 +19,13 @@ typedef void * (*new_it_fn)();
 
 pair_edge * new_pair_edge(int n);
 
-pair_edge * neighb_str(graph *g,  path * p,int * size_neigh);
-
 void free_pair_edge(pair_edge* p, int n);
 
-path* ls_best_improv (graph* g, path* p);
+pair_edge * neighb_str(graph *g,  path * p,int * size_neigh);
+
+path* ls_best_improv (graph* g, path* p, pair_edge* restr, int restr_len, pair_edge* replaced_pair_edge);
+
+path* fix_point_ls_best_improv (graph* g, path* init_p);
 
 void replace_edges (path* r, path* p, pair_edge* edges, int i);
 
