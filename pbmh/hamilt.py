@@ -18,9 +18,13 @@ class BTSPGraph(Graph):
         max_sum = sum(edges_weighted[-n:])
         return 2 * max(abs(min_sum), abs(max_sum))
 
-filename = argv[1]
-n, m, edges = read_instance(filename)
-g = BTSPGraph()
-g.add_weighted_edges_from(edges)
-g.bigM = g.calculate_bigM()
-print("n={} m={} M={}".format(len(g), g.size(), g.bigM))
+def read_graph(filename):
+    n, m, edges = read_instance(filename)
+    g = BTSPGraph()
+    g.add_weighted_edges_from(edges)
+    print(g[0][2]['weight'])
+    return g
+
+if __name__ == "__main__":
+    read_graph(argv[1])
+    
