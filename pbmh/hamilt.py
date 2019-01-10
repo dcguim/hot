@@ -22,8 +22,13 @@ def read_graph(filename):
     n, m, edges = read_instance(filename)
     g = BTSPGraph()
     g.add_weighted_edges_from(edges)
-    print(g[0][2]['weight'])
     return g
+
+def obj(g,path):
+    o = 0
+    for i in range(len(path)-1):        
+        o += g[path[i]][path[i+1]]['weight']
+    return abs(o)
 
 if __name__ == "__main__":
     read_graph(argv[1])
