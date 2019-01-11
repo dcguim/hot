@@ -25,11 +25,25 @@ def read_graph(filename):
     return g
 
 def obj(g,path):
+    print('obj fun')
+    print(path)
     o = 0
-    for i in range(len(path)-1):        
-        o += g[path[i]][path[i+1]]['weight']
+    for i in range(len(path)-1):
+        if g.has_edge(path[i],path[i+1]):
+            o += g[path[i]][path[i+1]]['weight']
+        else:
+            o += g.calculate_bigM()        
     return abs(o)
 
+def inPath(i,j,path):
+    for n in range(len(path)-1):
+        if i == path[n] and j == path[n+1]:
+            return True
+        elif j == path[n] and i == path[n+1]:
+            return True        
+    return False
+        
+    
 if __name__ == "__main__":
     read_graph(argv[1])
     
