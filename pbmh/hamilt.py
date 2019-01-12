@@ -22,6 +22,7 @@ def read_graph(filename):
     n, m, edges = read_instance(filename)
     g = BTSPGraph()
     g.add_weighted_edges_from(edges)
+    g.bigM = g.calculate_bigM()
     return g
 
 def obj(g,path):
@@ -32,7 +33,7 @@ def obj(g,path):
         if g.has_edge(path[i],path[i+1]):
             o += g[path[i]][path[i+1]]['weight']
         else:
-            o += g.calculate_bigM()        
+            o += g.bigM
     return abs(o)
 
 def inPath(i,j,path):
