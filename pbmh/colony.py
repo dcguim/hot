@@ -2,7 +2,8 @@ from ant import Ant
 from hamilt import obj, inPath
 from threading import Lock, Condition
 from sys import maxsize
-from random import choice 
+from random import choice
+from math import log, ceil
 
 class Colony():  # required params
     def __init__(self,alg,nants,graph,max_iterations,evap_rate,rand_init,
@@ -34,8 +35,6 @@ class Colony():  # required params
     def initPheromoneModel(self):
         for e in self._g.edges:
             self._pheromone[e] = 0.5
-        print('init pherormone model')
-        print(self._pheromone)
         
     def pickRandomNode(self):
         return choice(list(self._g.nodes))
@@ -80,9 +79,17 @@ class Colony():  # required params
         
     def runColony(self):
         print("run colony ...")
-        base = 0
+        count = 0
         for i in range(self.maxit):
+            bobj = self.bestobj
             self.runIt(i)
+            if self.bestobj == bobj:
+                count += 1
+            else:
+                count = 0
+            if count >= ceil(log(len(self._g))):
+                break            
+            
         print('best path found so far: {0}; objfun: {1}'.format(
             self.bestpath,self.bestobj))
 
@@ -130,7 +137,8 @@ class Colony():  # required params
             self.bestobj = o
             self.bestpath = path
         # add to rankedants if curr obj is smaller than ant with biggest obj
-        if o < self.rankedants[-1][1]:
+        
+        if self.alg == 'rank' and o < self.rankedants[-1][1]:
             for r in range(self.rank):
                 if o < self.rankedants[r][1]:
                     self.rankedants[r][0] = path
