@@ -7,10 +7,12 @@ from colony import Colony
 class HybridColony(Colony):
     def __init__(self,alg,nants,graph,max_iterations,evap_rate,rand_init,
                  # optional params
-                 nelit,alph,beta):
+                 nelit,alph,beta,rank,ls,abhc):
         self.__oldbestpath = None
+        self.do_ls = ls
+        self.do_abhc = abhc
         super().__init__(alg,nants,graph,max_iterations,evap_rate,rand_init,
-                nelit,alph,beta)
+                nelit,alph,beta,rank)
 
     def runColony(self):
         super().runColony()
@@ -22,40 +24,45 @@ class HybridColony(Colony):
         path = Path(self._g, self.bestpath)
         #ph = dict(self._pheromone)
 
-        # attribute based hill climber
-        while new_bestpath:
-            neighborhood = TwoOptNeighbors(self._g, path)
-            best_path, edges = neighborhood.get_best_improv()
-            #assert best_path == None or best_path.obj == obj(self._g, best_path.path)
-            if best_path is not None and best_path.obj < self.bestobj:
-                #print('replaced \n{} ({})\nwith\n{} ({})'.format(
-                #    self.bestpath, obj(self._g, self.bestpath),
-                #    best_path.path, obj(self._g, best_path.path)))
-                self.__update(path, (best_path, edges))
-                self.bestpath = best_path.path
-                self.bestobj = best_path.obj
-                path = best_path
-                print('BHC {}'.format(path.obj))
-                i += 1
-            else:
-                break
-
         # local search
-        improved = False
-        while new_bestpath:
-            neighborhood = TwoOptNeighbors(self._g, path, aspiration=False)
-            best_path, edges = neighborhood.get_best_improv()
-            print(best_path.obj)
-            if best_path is not None and best_path.obj < self.bestobj:
-                self.bestpath = best_path.path
-                self.bestobj = best_path.obj
-                path = best_path
-                improved = True
-                print('LS  {}'.format(path.obj))
-            else:
-                break
-        if improved:
-            self.__update_ph(path)
+        if self.do_ls:
+            improved = False
+            while new_bestpath:
+                neighborhood = TwoOptNeighbors(self._g, path, aspiration=False)
+                best_path, edges = neighborhood.get_best_improv()
+                if best_path is not None and best_path.obj < self.bestobj:
+                    self.bestpath = best_path.path
+                    self.bestobj = best_path.obj
+                    path = best_path
+                    improved = True
+                    print('LS  {}'.format(path.obj))
+                else:
+                    break
+            if improved:
+                self.__update_ph(path)
+
+        # attribute based hill climber
+        if self.do_abhc:
+            improved = False
+            while new_bestpath:
+                neighborhood = TwoOptNeighbors(self._g, path)
+                best_path, edges = neighborhood.get_best_improv()
+                #assert best_path == None or best_path.obj == obj(self._g, best_path.path)
+                if best_path is not None and best_path.obj < self.bestobj:
+                    #print('replaced \n{} ({})\nwith\n{} ({})'.format(
+                    #    self.bestpath, obj(self._g, self.bestpath),
+                    #    best_path.path, obj(self._g, best_path.path)))
+                    self.__update(path, (best_path, edges), ph=False)
+                    self.bestpath = best_path.path
+                    self.bestobj = best_path.obj
+                    path = best_path
+                    improved = True
+                    print('BHC {}'.format(path.obj))
+                else:
+                    break
+            if improved:
+                self.__update_ph(path)
+                self.__update_ph_by_value()
 
         self.__oldbestpath = self.bestpath
 
@@ -69,31 +76,31 @@ class HybridColony(Colony):
         p = path.path
         a = (p[edges[0]], p[edges[1]])
         b = (p[edges[0]+1], p[edges[1]+1])
-        if best_path.obj >= path.obj:
+        if best_path.obj >= path.obj and not ph:
             if self._g.has_edge(*a):
                 a_value = self._g[a[0]][a[1]].get('value', math.inf)
-                if a_value > best_path.obj:
-                    self._g[a[0]][a[1]]['value'] = best_path.obj
-                    if ph:
-                        old_phero = self.getPhero(*a)
-                        self.setPhero(*a, old_phero + 1/best_path.obj)
+                new_a_value = min(a_value, best_path.obj)
+                self._g[a[0]][a[1]]['value'] = min(new_a_value, best_path.obj)
+                if ph:
+                    old_phero = self.getPhero(*a)
+                    self.setPhero(*a, old_phero + 1/new_a_value)
             if self._g.has_edge(*b):
                 b_value = self._g[b[0]][b[1]].get('value', math.inf)
-                if b_value > best_path.obj:
-                    self._g[b[0]][b[1]]['value'] = best_path.obj
-                    if ph:
-                        old_phero = self.getPhero(*b)
-                        self.setPhero(*b, old_phero + 1/best_path.obj)
+                new_b_value = min(b_value, best_path.obj)
+                self._g[b[0]][b[1]]['value'] = min(new_b_value, best_path.obj)
+                if ph:
+                    old_phero = self.getPhero(*b)
+                    self.setPhero(*b, old_phero + 1/new_b_value)
         else:
             for i in range(len(best_path.path) - 1):
-                e = (p[i], p[i+1])
+                e = (best_path.path[i], best_path.path[i+1])
                 if self._g.has_edge(*e):
                     value = self._g.edges[e].get('value', math.inf)
-                    if value > best_path.obj:
-                        self._g.edges[e]['value'] = best_path.obj
-                        if ph:
-                            old_phero = self.getPhero(*e)
-                            self.setPhero(*e, old_phero + 1/best_path.obj)
+                    new_value = min(value, best_path.obj)
+                    self._g.edges[e]['value'] = best_path.obj
+                    if ph:
+                        old_phero = self.getPhero(*e)
+                        self.setPhero(*e, old_phero + 1/new_value)
 
     def __update_ph(self, best_path):
         p = best_path.path
@@ -102,6 +109,11 @@ class HybridColony(Colony):
             if self._g.has_edge(*e):
                 old_phero = self.getPhero(*e)
                 self.setPhero(*e, old_phero + 1/best_path.obj*self.size)
+
+    def __update_ph_by_value(self):
+        for (v, w, e) in self._g.edges.data('value', default=math.inf):
+            old_phero = self.getPhero(v, w)
+            self.setPhero(v, w, old_phero + 1/e)
 
 class Path:
     def __init__(self, graph, path, osum=None):
