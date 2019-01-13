@@ -7,12 +7,13 @@ from random import choice
 class Colony():  # required params
     def __init__(self,alg,nants,graph,max_iterations,evap_rate,rand_init,
                  # optional params
-                 nelit,alph,beta):
+                 nelit,alph,beta,rank):
         self.alg = alg
         self.bestobj = maxsize
         self.bestpath = []
         self.size = nants
         self.nelit = nelit
+        self.rank = rank
         self.ants = []
         self.rinit = rand_init
         self.maxit = max_iterations
@@ -23,13 +24,17 @@ class Colony():  # required params
         self._pheromone = {}
         self.l = Lock()
         self.initPheromoneModel()
+        self.rankedants = []
+        if self.alg == 'rank':
+            for r in range(self.rank):
+                self.rankedants.append([[],maxsize])
         self.init = False
         self.runColony()
 
     def initPheromoneModel(self):
         for e in self._g.edges:
             self._pheromone[e] = 0.5
-        print('pherormone model')
+        print('init pherormone model')
         print(self._pheromone)
         
     def pickRandomNode(self):
@@ -69,9 +74,9 @@ class Colony():  # required params
         
     def pheroEvaporate(self):
         for e in self._g.edges:
-            prev_phero = self.getPhero(e[0],e[1])
-            next_phero = (1 - self.evaprate)*prev_phero
-            self.setPhero(e[0],e[1],next_phero)
+            prevphero = self.getPhero(e[0],e[1])
+            nextphero = (1 - self.evaprate)*prevphero
+            self.setPhero(e[0],e[1],nextphero)
         
     def runColony(self):
         print("run colony ...")
@@ -98,7 +103,20 @@ class Colony():  # required params
 
     def neighborhood(self,node,path):
         return [n for n in self._g[node].keys() if n not in path]
-
+    
+    def setPriorityPhero(self, i, path, prevphero, obj):
+        if self.alg == 'elitist':
+            if inPath(path[i],path[i+1],self.bestpath):
+                dElit = 1/self.bestobj
+                self.setPhero(path[i],path[i+1],
+                              prevphero + 1/obj + self.nelit*dElit)
+        if self.alg == 'rank':
+            for r in range(self.rank):
+                if inPath(path[i],path[i+1],self.rankedants[r][0]):
+                    dPrio = 1/self.rankedants[r][1]
+                    self.setPhero(path[i],path[i+1],
+                                  prevphero + (self.rank-r)*dPrio)
+        
     def pheroUpdate(self, tid, path):
         "update the pheromone from thread tid path"
         print("update the pheromone from thread {0}".format(tid))
@@ -107,19 +125,24 @@ class Colony():  # required params
         print(path)
         self.pheroEvaporate()
         o = obj(self._g,path)
+        # select the best path and obj
         if o < self.bestobj:
             self.bestobj = o
             self.bestpath = path
+        # add to rankedants if curr obj is smaller than ant with biggest obj
+        if o < self.rankedants[-1][1]:
+            for r in range(self.rank):
+                if o < self.rankedants[r][1]:
+                    self.rankedants[r][0] = path
+                    self.rankedants[r][1] = o
+                    break
+            sorted(self.rankedants, key=lambda ant: ant[1])
+        # update pheromones
         for i in range(len(path)-1):
-            prev_phero = self.getPhero(path[i],path[i+1])
-            if self.alg == 'elitist':
-                if inPath(path[i],path[i+1],self.bestpath):
-                    dElit = 1/self.bestobj
-                    self.setPhero(path[i],path[i+1], prev_phero + 1/o + dElit)
-                else:
-                    self.setPhero(path[i],path[i+1], prev_phero + 1/o)
+            prevphero = self.getPhero(path[i],path[i+1])
+            if self.alg == 'antsys':
+                self.setPhero(path[i],path[i+1], prevphero + 1/o)
             else:
-                self.setPhero(path[i],path[i+1], prev_phero + 1/o)
-        print(self._pheromone)
+                self.setPriorityPhero(i, path, prevphero, o)
         self.l.release()
         print("thread "+str(tid)+" released lock" )
