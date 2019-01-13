@@ -36,6 +36,15 @@ def obj(g,path):
             o += g.bigM
     return abs(o)
 
+def objsum(g, path):
+    o = 0
+    for i in range(len(path)-1):
+        if g.has_edge(path[i],path[i+1]):
+            o += g[path[i]][path[i+1]]['weight']
+        else:
+            o += g.bigM
+    return o
+
 def inPath(i,j,path):
     for n in range(len(path)-1):
         if i == path[n] and j == path[n+1]:

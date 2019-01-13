@@ -115,7 +115,7 @@ class Colony():  # required params
             if self.alg == 'elitist':
                 if inPath(path[i],path[i+1],self.bestpath):
                     dElit = 1/self.bestobj
-                    self.setPhero(path[i],path[i+1], prev_phero + 1/o + dElit)
+                    self.setPhero(path[i],path[i+1], prev_phero + 1/o + dElit * self.nelit)
                 else:
                     self.setPhero(path[i],path[i+1], prev_phero + 1/o)
             else:

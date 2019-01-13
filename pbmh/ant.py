@@ -1,6 +1,6 @@
 from threading import Thread
 from time import sleep
-from random import uniform
+from random import uniform, choice
 
 class Ant(Thread):
     def __init__(self,tid,randinit,colony):
