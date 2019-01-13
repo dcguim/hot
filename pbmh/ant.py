@@ -26,7 +26,7 @@ class Ant(Thread):
             return self.unvisit[-1]
         pneighs = list(map(lambda n :
                            (self.__colony.getPhero(self.curr,n)**self.__colony.alp)*
-                           ((1/self.__colony.getWeight(self.curr,n))**self.__colony.bet),
+                           ((1/abs(self.__colony.getWeight(self.curr,n)))**self.__colony.bet),
                            neighs))
         try:
             pneighs = list(map(lambda n: n/sum(pneighs), pneighs))
