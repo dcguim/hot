@@ -1,6 +1,6 @@
 from threading import Thread
 from time import sleep
-from random import uniform
+from random import uniform, choice
 
 class Ant(Thread):
     def __init__(self,tid,randinit,colony):
@@ -28,7 +28,10 @@ class Ant(Thread):
                            (self.__colony.getPhero(self.curr,n)**self.__colony.alp)*
                            ((1/self.__colony.getWeight(self.curr,n))**self.__colony.bet),
                            neighs))
-        pneighs = list(map(lambda n: n/sum(pneighs), pneighs))        
+        try:
+            pneighs = list(map(lambda n: n/sum(pneighs), pneighs))
+        except ZeroDivisionError:
+            return choice(neighs)
         intervals = []
         last = 0
         for i in range(len(pneighs)):
