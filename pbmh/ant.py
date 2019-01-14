@@ -38,8 +38,13 @@ class Ant(Thread):
         if not neighs:
             return self.unvisit[-1]
         pneighs = list(map(lambda n :
+<<<<<<< HEAD
                            (self._colony.getPhero(self.curr,n)**self._colony.alp)*
                            ((1/self._colony.getWeight(self.curr,n))**self._colony.bet),
+=======
+                           (self.__colony.getPhero(self.curr,n)**self.__colony.alp)*
+                           ((1/abs(self.__colony.getWeight(self.curr,n)))**self.__colony.bet),
+>>>>>>> 87030cfbd59f0351deccafd28973543d826b31e0
                            neighs))
         try:
             pneighs = list(map(lambda n: n/sum(pneighs), pneighs))
