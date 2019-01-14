@@ -6,27 +6,40 @@ class Ant(Thread):
     def __init__(self,tid,randinit,colony):
         Thread.__init__(self)
         self.tid = tid
-        self.__colony = colony
+        self._colony = colony
         if randinit == 0:
             self.init = 0
             self.curr = 0
         elif randinit == 1:
-            self.init = self.__colony.pickRandomNode()
+            self.init = self._colony.pickRandomNode()
             self.curr = self.init
-        self.unvisit = self.__colony.univisited(self.init)
+        self.unvisit = self._colony.univisited(self.init)
         self.n = len(self.unvisit)
         self.path = []
-        self.path.append(self.curr)            
+        self.path.append(self.curr)
         
-    def select_neighbor(self):
-        "Assuming alpha and beta are one"
-        neighs = self.__colony.neighborhood(self.curr,self.path)
+    def intensifyEdge(self):
+        neighs = self._colony.neighborhood(self.curr,self.path)
+        if not neighs:
+            return self.unvisit[-1]
+        hneighs = list(map(lambda n :
+                           self._colony.getPhero(self.curr,n)*
+                          (1/self._colony.getWeight(self.curr,n))**self._colony.bet,
+                          neighs))
+        i = 0
+        for i in range(len(neighs)):
+            if max(hneighs) == hneighs[i]:
+                break
+        return neighs[i]
+    
+    def selectNeighbor(self):
+        neighs = self._colony.neighborhood(self.curr,self.path)
         # if there are no neighbors, just a pick next unvisited node
         if not neighs:
             return self.unvisit[-1]
         pneighs = list(map(lambda n :
-                           (self.__colony.getPhero(self.curr,n)**self.__colony.alp)*
-                           ((1/self.__colony.getWeight(self.curr,n))**self.__colony.bet),
+                           (self._colony.getPhero(self.curr,n)**self._colony.alp)*
+                           ((1/self._colony.getWeight(self.curr,n))**self._colony.bet),
                            neighs))
         try:
             pneighs = list(map(lambda n: n/sum(pneighs), pneighs))
@@ -45,13 +58,24 @@ class Ant(Thread):
         return neighs[i]    
     
     def run(self):
-        print('thread id:{0} no of unvisiteds {1}'.format(self.tid,self.n))
+        ##print('thread id:{0} no of unvisiteds {1}'.format(self.tid,self.n))
         for i in range(self.n):            
-            print("thread " + str(self.tid) + " run "+ str(i))
-            self.curr = self.select_neighbor()
+            #print("thread " + str(self.tid) + " run "+ str(i))
+            if self._colony.alg == 'antcolsys':
+                rand = uniform(0,1)
+                prev = self.curr
+                if rand <= self._colony.divint:
+                    self.curr = self.intensifyEdge()
+                else:
+                    self.curr = self.selectNeighbor()
+                self._colony.pheroLocUpdate(prev, self.curr)
+            else:
+                self.curr = self.selectNeighbor()
             self.path.append(self.curr)
             self.unvisit.remove(self.curr)
         self.path.append(self.init)
         self.curr = self.init
-        self.__colony.pheroUpdate(self.tid,self.path)
-        print("finish thread {0}".format(self.tid))
+        self._colony.antsUpdate(self.path)
+        if self._colony.alg != 'antcolsys':
+            self._colony.pheroUpdate(self.tid,self.path)
+        #print("finish thread {0}".format(self.tid))
