@@ -26,6 +26,7 @@ class Colony():  # required params
         self.pheroinit = 0.5
         self._g = graph
         self._pheromone = {}
+        self.rankupdate = False
         self.l = Lock()
         self.cl = Condition()
         self.initPheromoneModel()
@@ -155,17 +156,17 @@ class Colony():  # required params
             self.bestobj = o
             self.bestpath = path
         # add to rankedants if curr obj is smaller than ant with biggest obj
-        rankupdate = False
+        self.rankupdate = False
         if self.alg == 'rank' and o < self.rankedants[-1][1]:
             for r in range(self.rank):
                 if o < self.rankedants[r][1]:
                     self.rankedants[r][0] = path
                     self.rankedants[r][1] = o
-                    rankupdate = True
+                    self.rankupdate = True
                     break
             sorted(self.rankedants, key=lambda ant: ant[1])
         self.l.release()
-        
+    
     def pheroUpdate(self, tid, path):
         "update the pheromone from thread tid path"
         #print("update the pheromone from thread {0}".format(tid))
@@ -178,7 +179,7 @@ class Colony():  # required params
             prevphero = self.getPhero(path[i],path[i+1])
             if self.alg == 'antsys':
                 self.setPhero(path[i],path[i+1], prevphero + 1/o)
-            elif self.alg == 'rank' and rankupdate == True:
+            elif self.alg == 'rank' and self.rankupdate == True:
                 self.setPriorityPhero(i, path, prevphero, o)
             elif self.alg == 'elitist':
                 self.setPriorityPhero(i, path, prevphero, o)

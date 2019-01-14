@@ -64,3 +64,4 @@ if __name__ == "__main__":
     it = iter(argv[1:])
     a = zip(it, it)
     aco(list(a))
+
