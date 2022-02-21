@@ -1,35 +1,54 @@
-# Heuristics Optimization Techniques Assignment
+# Heuristics Optimization Techniques
 ## Single-solution-based Metaheuristics
 
-Develop single-solution-based metaheuristics for the cost-balanced traveling salesperson problem using varied heuristics: 
+Develop single-solution-based metaheuristics for the cost-balanced traveling 
+salesperson problem (CBTSP) using varied heuristics:
  - Deterministic and randomized construction heuristics
  - Framework for simple local search, using different neighborhood structures and step functions
 
-####  Modules
-##### hamilt: Main module which call the heuristics, define the graph and run the tests using utils.   
-###### structs: 
-- edge, vertex, graph and path.
-###### functions
-- path * new_path (int length)
-- void path_print(path * p)
-- int cmp_int (const void * a, const void * b)
-- int cmp_cost (const void * a, const void * b)
-- int cbtsp_o(graph * g, path * p):
-Objective function for the cost-balanced tsp
-- int feasible (path * p):
-Returns -2 if the path is feasible, -1 if the path does not return to the start vertex, or the index of the vertex (different then the starting vertex) if is visited more then once.
+###  Modules
+#### `hamilt`: Main module which call the heuristics
+This module first transform the provided test file into a graph with `graph_from_file`. A graph here is just
+implemented as a collection of edges `E` and of vertices `V`, as well as it's sizes, `m = |E|`  and `n = |V|`
+graphs also contain a `bigM` which are values that are big enough so to render an edge unpickable in 
+minimization problems, in this case it is usually two times the sum of `n` costliest edges.
+Additionally, the notion of a `path` is defined as a collection of node ids, the struct also contains
+a `length` and the sum of it's edges costs called `distance`. Edges contain two vertices and a cost, 
+and vertices contain an id and a degree, i.e. the number of incident edges, for more information 
+please look at `hamilt.h`. 
 
-##### const_heu: Implementation of the deterministic construction heuristics
-###### structs: 
-- edge_diff
+The following algorithms/heuristics are implemented:
+- deterministic construction heuristic (`det_ch`)
+- randomized construction heuristic (`rand_ch`)
+- local search (`ls`)
+- greedy randomized adaptive search procedure (`grasp`)
+###### structs
+- edge
+- vertex
+- graph
+- path
 ###### functions
- - int * get_edges_ordered_by_closest_to_zero(vertex * v, int cost): 
-Returns array of indices of edges in the adj list of the given vertex [v]
-sorted from 'best' to 'worst', where 'best' means the edge's cost added
-to the given [cost] is closest to zero.
+- **path * new_path (int length)**: allocates a path of size length and `LLONG_MAX` distance.
+- **void free_path (path * p):** frees the allocated path.
+- **void path_print(path * p)**: prints the path.
+- **void edges_print(graph * g)**: prints the edges in the given graph `g`.
+- **int cmp_int (const void * a, const void * b)**: utility to compare int pointers.
+- **cost_t cbtsp_o(graph * g, path * p)**: objective function for the cost-balanced tsp
+- **cost_t distance(graph * g, int a, int b)**: returns the distance between two ids or bigM if no edge exist
+- **double rand_double()**: returns a random double value in the range [0, 1)
+- **edge * find_edge (graph * g, int a, int b)**: returns the edge if exists or null
+- **path* invert (path* p, int beg, int end)**: invert a section beg-end of a path.
+- **int feasible(path * p)**:
+- **path * copy_path (path* p)**:
+- **path * assign_path (path* a, path* p)**:
 
-- path * ch_nearest_neighbor (graph * g, int start):
-- int edge_diff_cmp (const void * a, const void * b):
+#### `const_heu`: Implements construction heuristics
+The difference between the nearest neighbor and the nearest neighbor randomized approach is that the
+fomer build the hamiltonean path by greedily selecting the node with the shortest distance from the
+current while the randomized selects considers `floor(max*r)` closest neighbors and randomly picks one.
+###### functions
+- **path * ch_nearest_neighbor (graph * g, int start)**: greedly builds a hamiltonean path by picking the closest neighbors
+- **path * ch_nearest_neighbor_randomized (graph * g, int start, double r)**: builds a hamiltonean path by picking the neighbors randomly.
 
 ##### ls_heu: Implementation of the local search heuristics for 2,3-opt
 ###### structs: 
@@ -47,18 +66,22 @@ to the given [cost] is closest to zero.
 ####  Usage
 ##### Compilation
 ```sh
-$ gcc -Wall hamilt.c const_heu.c ls_heu.c pcg_basic.c grasp.c tabu_heu.c -o hamilt
+$ gcc -Wall hamilt.c const_heu.c ls_heu.c pcg_basic.c grasp.c tabu_heu.c vnd.c -o hamilt
 ```
 
 with debug output enabled:
 ```sh
-$ gcc -Wall -DPRINTD hamilt.c const_heu.c ls_heu.c pcg_basic.c grasp.c tabu_heu.c -o hamilt
+$ gcc -Wall -DPRINTD hamilt.c const_heu.c ls_heu.c pcg_basic.c grasp.c tabu_heu.c vnd.c -o hamilt
 ```
 ##### Execution
+Simple usage:
 ```sh
-$ ./hamilt tests/testname ALGORITHM
+$ ./hamilt ../tests/testname ALGORITHM START_VERTEX_ID
 ```
-Available algorithms: det_ch, rand_ch, ls, grasp
+Elaborate usage:
+```sh
+$ ./hamilt ../tests/testname ALGORITHM START_VERTEX_ID NEIGHBORHOOD_METHOD STEP_FN [RUNTIME_SEC]
+```
 ### Notes / TODOs
 - The edges are dynamically allocated two times, as graph edges and as the the veritices that are connected to each given vertex. Therefore 2*O(exp(n)) which is not efficient, however we will try to preserve the convenience of having this structure while dynamically allocating it only once by pointing to a unique graph structure. This will be done in the future as a efficiency issue.
 - In the ls_heu there are two ways of computing all the combinations of a group of edges, if they are defined by a path or simply as a array of edges, however it may be interesting to change the the struct path to simply an array of edges, instead of storing only the ids, the cost of adapting the code to this mod. is not so big.
