@@ -81,7 +81,7 @@ Conversely, notice the following relationship applies:
  It replaces the edges by reverting the path in specific subsequences of the path, which is equivalent. It searches for paths shorter than p, until time exceeds
  or the last iterator is bigger or equal the path length - 5 in which case it makes no sense to update the (i,j,k) values.
  - **path * n_3opt_rand (graph * g, path * p, void * it)**: this function simply randomizes the (i,j,k) values while preserving the relationship i<j<k.
- - **path * n_25opt_next (graph * g, path * p, void* it)**: this method first searches for a pair of unexisting edges both to each other, i.e. edges
+ - **path * n_25opt_next (graph * g, path * p, void * it)**: this method first searches for a pair of unexisting edges both to each other, i.e. edges
  with distance equals bigM with the iterator i, and then exchange those edges with another edge pointed by j to replace with, potentially reducing
  the distance to the path. The 2.5-opt is between 2 and 3 opt in the sense that it replaces 3 edges but two of those edges are next to each-other
  the iterator s won't iterate throughout the path, like i and j.
