@@ -5,7 +5,9 @@ Develop single-solution-based metaheuristics for the cost-balanced traveling
 salesperson problem (CBTSP) using varied heuristics:
  - Deterministic and randomized construction heuristics
  - Framework for simple local search, using different neighborhood structures and step functions
-
+ - Greedy Randomized Adaptive Search Procedure
+ - Tabu Search
+ - Variable Depth Search (Lin-Kernighan)
 ###  Modules
 #### `hamilt`: Main module which call the heuristics
 This module first transform the provided test file into a graph with `graph_from_file`. A graph here is just
@@ -131,8 +133,11 @@ For `ALGORITHM` = `ls`,
 $ ./hamilt ../tests/testname ls START_VERTEX_ID NEIGHBORHOOD_METHOD STEP_FN [RUNTIME_SEC]
 ```
 ### Notes / TODOs
+- Finish documenting Greedy Randomized Adaptive Search Procedure
+- Finish documenting Tabu Search
+- Finish documenting Variable Depth Search (Lin-Kernighan)
 - The edges are dynamically allocated two times, as graph edges and as the the veritices that are connected to each given vertex. Therefore 2*O(exp(n)) which is not efficient, however we will try to preserve the convenience of having this structure while dynamically allocating it only once by pointing to a unique graph structure. This will be done in the future as a efficiency issue.
 - In the ls_heu there are two ways of computing all the combinations of a group of edges, if they are defined by a path or simply as a array of edges, however it may be interesting to change the the struct path to simply an array of edges, instead of storing only the ids, the cost of adapting the code to this mod. is not so big.
-- Rewrite the n_25opt_next.
+- Rewrite the n_25opt_next, are there other variants to consider?
 - Attempt to integrate the 2opt as 25opt and 3opt using an iterator function.
 - Implement the first improv and and random improvement for functionalities for 2opt
